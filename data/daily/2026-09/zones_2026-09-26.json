@@ -4,40 +4,40 @@
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "H-I",
-    "pick_amount": 72834180.0,
-    "pick_box": 639,
-    "wave_time_hr": 15.3297,
-    "wms_time_hr": 27.7671
+    "pick_amount": 24668500.0,
+    "pick_box": 197,
+    "wave_time_hr": 6.2945,
+    "wms_time_hr": 7.7963
   },
   {
     "work_date": "2026-09-26",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "C-D",
-    "pick_amount": 81104170.0,
-    "pick_box": 1662,
-    "wave_time_hr": 31.1831,
-    "wms_time_hr": 42.4459
+    "pick_amount": 13588540.0,
+    "pick_box": 286,
+    "wave_time_hr": 4.2065,
+    "wms_time_hr": 8.028
   },
   {
     "work_date": "2026-09-26",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "A-P",
-    "pick_amount": 112054960.0,
-    "pick_box": 1288,
-    "wave_time_hr": 26.7998,
-    "wms_time_hr": 62.635
+    "pick_amount": 9475930.0,
+    "pick_box": 44,
+    "wave_time_hr": 1.2642,
+    "wms_time_hr": 6.4158
   },
   {
     "work_date": "2026-09-26",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "M-N",
-    "pick_amount": 76387600.0,
-    "pick_box": 1206,
-    "wave_time_hr": 10.1642,
-    "wms_time_hr": 46.887
+    "pick_amount": 10453100.0,
+    "pick_box": 212,
+    "wave_time_hr": 1.6253,
+    "wms_time_hr": 3.2803
   },
   {
     "work_date": "2026-09-26",
@@ -56,7 +56,7 @@
     "zone": "R",
     "pick_amount": 2990910.0,
     "pick_box": 9,
-    "wave_time_hr": 0.1029,
+    "wave_time_hr": 0.3087,
     "wms_time_hr": 0.2008
   }
 ]

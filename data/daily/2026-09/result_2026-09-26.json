@@ -1,15 +1,15 @@
 {
   "H-I": {
-    "pick_box": 639.0,
-    "pick_amount": 72834180.0
+    "pick_box": 197.0,
+    "pick_amount": 24668500.0
   },
   "C-D": {
-    "pick_box": 1662.0,
-    "pick_amount": 81104170.0
+    "pick_box": 286.0,
+    "pick_amount": 13588540.0
   },
   "A-P": {
-    "pick_box": 1288.0,
-    "pick_amount": 112054960.0
+    "pick_box": 44.0,
+    "pick_amount": 9475930.0
   },
   "DPS": {
     "pick_box": 0.0,
@@ -36,8 +36,8 @@
     "pick_amount": 0.0
   },
   "M-N": {
-    "pick_box": 1206.0,
-    "pick_amount": 76387600.0
+    "pick_box": 212.0,
+    "pick_amount": 10453100.0
   },
   "S": {
     "pick_box": 34.0,
