@@ -16,13 +16,16 @@ WMS 데이터 수집 RPA (피킹 + 입고/이동)
     (3PL 원본에 그룹사 물량이 섞여 나올 수 있음 — 이후 자동화 단계의 exclude_owners/_3PL_EXCL이 제거)
 
 파일명/날짜 범위 (피킹, PALLET HISTORY):
-  - 일룸/데스커(야간 있음): {브랜드}_{MMDD}_{END}.xlsx   date_from=target, date_to=next_weekday
+  - 일룸/데스커(야간 있음): {브랜드}_{MMDD}_{END}.xlsx   date_from=target, date_to=target+1일
   - 퍼시스/3PL (주간 전용): {브랜드}_{MMDD}.xlsx          date_from=date_to=target
 
-next_weekday 규칙 (피킹 전용 — 입고/이동은 항상 단일일):
-  평일  target → target+1일 (다음날)
-  토요일 target → target+2일 (월요일)     ex) 토/일/월
-  공휴일 전날  → 수동 --date 사용 권장
+365일 운영 체제로 전환(2026-09-28)하면서 토/일/공휴일도 각자 독립된 근무일로 처리 —
+과거엔 주말을 건너뛰어 "토요일 실적에 일요일 야간(월요일 준비)까지 얹는" 방식이었으나,
+주말도 자체 실적이 있는 지금은 그 방식이 인접 날짜 간 야간 실적 이중집계를 유발한다
+(예: 토요일 파일과 일요일 파일이 둘 다 일요일 밤~월요일 새벽 구간을 포함해 같은 사람의
+같은 픽이 토요일·일요일 양쪽에 집계됨). 그래서 야간 브랜드도 항상 target+1일까지만
+받는다 — 야간이 있으면 그 구간에서 주간+야간(+석간)이 다 잡히고, 야간이 없으면
+자연히 주간만 남는다.
 
 파일명 (입고/이동, ITEM HISTORY — 브랜드 무관 항상 단일일 target 기준):
   - 입고_{브랜드}_{MMDD}.xlsx  (WMS "실적관리 > ITEM HISTORY > 입하/적치실적" 탭과 동일 데이터)
@@ -105,33 +108,19 @@ BRAND_WAREHOUSE = {
 
 
 # ── 날짜 헬퍼 ──────────────────────────────────────────────────────────
-def next_weekday(d: date) -> date:
-    """d 다음 날부터 첫 번째 평일(월~금) 반환.
-    공휴일은 별도 처리 없음 → 공휴일 낀 주간은 --date 수동 실행 권장.
-    """
-    d = d + timedelta(days=1)
-    while d.weekday() >= 5:   # 5=토, 6=일
-        d += timedelta(days=1)
-    return d
-
-
 def get_file_spec(brand: str, target: date):
     """(date_from, date_to, filename) 반환
 
-    야간 브랜드(일룸/데스커)의 종료일 규칙 — 파일명 끝 날짜가 야간 윈도우를
-    결정하므로(_i1_d1_window) 잘못 잡으면 야간 실적이 통째로 누락됨 (2026-07-11 규명):
-    - 평일(월~금): 익일까지. 금요일도 토요일까지만 — next_weekday(월)로 잡으면
-      야간 윈도우가 일 21시~월 08시로 밀려 금요일 야간(금 21시~토 08시)이 0건이 됨.
-    - 토요일(특근): 다음 평일(월)까지 — 일 21시~월 08시 '월요일 준비 야간'이
-      토요일 실적에 귀속 (이전 담당자 수동 방식과 동일: 토→월 조회).
+    야간 브랜드(일룸/데스커)는 항상 target+1일까지 받는다(365일 운영 체제,
+    2026-09-28) — 토/일/공휴일도 각자 독립된 근무일이라 요일 구분 없이 동일 규칙.
+    파일명 끝 날짜가 야간 윈도우를 결정하므로(_i1_d1_window) 이 날짜가 어긋나면
+    야간 실적이 통째로 누락되거나(2026-07-11 규명), 인접 날짜와 이중집계된다
+    (2026-09-28 규명 — 과거 주말-스킵 방식의 부작용).
     """
     ymd = target.strftime("%m%d")
 
     if brand in NIGHT_BRANDS:
-        if target.weekday() <= 4:            # 월~금
-            end = target + timedelta(days=1)
-        else:                                # 토/일 특근
-            end = next_weekday(target)
+        end = target + timedelta(days=1)
         emd = end.strftime("%m%d")
         return target, end, f"{brand}_{ymd}_{emd}.xlsx"
     else:
