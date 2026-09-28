@@ -18,17 +18,12 @@ const ZONE_OWNER: Record<string, string> = {
 const METRIC_LABELS = [
   '피킹금액(원)',
   '박스수',
-  '표준시간(h)',
+  '작업시간(h)',
   'WMS시간(h)',
-  '실적시간(h)',
-  '가동률(%)',
 ]
 
 function n(v: number | null | undefined): number {
   return v ?? 0
-}
-function pct(std: number, act: number): number {
-  return act > 0 ? Math.round((std / act) * 1000) / 10 : 0
 }
 
 /**
@@ -45,17 +40,16 @@ export function exportZoneExcel(rows: ZoneDaily[], filename: string): void {
   /* ② 날짜×구역 → 집계 맵 */
   type ZoneMetrics = {
     pick_amount: number; pick_box: number
-    std_time_hr: number; wms_time_hr: number; act_time_hr: number
+    wave_time_hr: number; wms_time_hr: number
   }
   const map = new Map<string, ZoneMetrics>()
   for (const r of rows) {
     const key = `${r.work_date}|${r.zone}`
-    const cur = map.get(key) ?? { pick_amount: 0, pick_box: 0, std_time_hr: 0, wms_time_hr: 0, act_time_hr: 0 }
-    cur.pick_amount  += n(r.pick_amount)
-    cur.pick_box     += n(r.pick_box)
-    cur.std_time_hr  += n(r.std_time_hr)
-    cur.wms_time_hr  += n(r.wms_time_hr)
-    cur.act_time_hr  += n(r.act_time_hr)
+    const cur = map.get(key) ?? { pick_amount: 0, pick_box: 0, wave_time_hr: 0, wms_time_hr: 0 }
+    cur.pick_amount   += n(r.pick_amount)
+    cur.pick_box      += n(r.pick_box)
+    cur.wave_time_hr  += n(r.wave_time_hr)
+    cur.wms_time_hr   += n(r.wms_time_hr)
     map.set(key, cur)
   }
 
@@ -82,19 +76,17 @@ export function exportZoneExcel(rows: ZoneDaily[], filename: string): void {
     METRIC_LABELS.forEach(m => { byMetric[m] = [] })
 
     // 합계용
-    let totAmt = 0, totBox = 0, totStd = 0, totWms = 0, totAct = 0
+    let totAmt = 0, totBox = 0, totWave = 0, totWms = 0
 
     for (const d of dates) {
       const m = map.get(`${d}|${zone}`)
       if (m) {
         byMetric['피킹금액(원)'].push(Math.round(m.pick_amount))
         byMetric['박스수'].push(m.pick_box)
-        byMetric['표준시간(h)'].push(Math.round(m.std_time_hr * 100) / 100)
+        byMetric['작업시간(h)'].push(Math.round(m.wave_time_hr * 100) / 100)
         byMetric['WMS시간(h)'].push(m.wms_time_hr > 0 ? Math.round(m.wms_time_hr * 100) / 100 : '')
-        byMetric['실적시간(h)'].push(Math.round(m.act_time_hr * 100) / 100)
-        byMetric['가동률(%)'].push(pct(m.std_time_hr, m.act_time_hr))
         totAmt += m.pick_amount; totBox += m.pick_box
-        totStd += m.std_time_hr; totWms += m.wms_time_hr; totAct += m.act_time_hr
+        totWave += m.wave_time_hr; totWms += m.wms_time_hr
       } else {
         METRIC_LABELS.forEach(ml => { byMetric[ml].push('') })
       }
@@ -103,10 +95,8 @@ export function exportZoneExcel(rows: ZoneDaily[], filename: string): void {
     // 합계 컬럼 추가
     byMetric['피킹금액(원)'].push(Math.round(totAmt))
     byMetric['박스수'].push(totBox)
-    byMetric['표준시간(h)'].push(Math.round(totStd * 100) / 100)
+    byMetric['작업시간(h)'].push(Math.round(totWave * 100) / 100)
     byMetric['WMS시간(h)'].push(totWms > 0 ? Math.round(totWms * 100) / 100 : '')
-    byMetric['실적시간(h)'].push(Math.round(totAct * 100) / 100)
-    byMetric['가동률(%)'].push(pct(totStd, totAct))
 
     // 지표별 행 추가
     METRIC_LABELS.forEach((ml, idx) => {
@@ -146,8 +136,7 @@ export function exportZoneExcel(rows: ZoneDaily[], filename: string): void {
 
     sheetRows.push(totRow('피킹금액(원)', m => Math.round(m.pick_amount)))
     sheetRows.push(totRow('박스수',       m => m.pick_box))
-    sheetRows.push(totRow('표준시간(h)', m => Math.round(m.std_time_hr * 100) / 100))
-    sheetRows.push(totRow('실적시간(h)', m => Math.round(m.act_time_hr * 100) / 100))
+    sheetRows.push(totRow('작업시간(h)', m => Math.round(m.wave_time_hr * 100) / 100))
   }
 
   /* ⑦ 헤더에 합계 컬럼 추가 */
@@ -173,29 +162,26 @@ export function exportZoneExcel(rows: ZoneDaily[], filename: string): void {
     const [, m, day] = d.split('-')
     const sheetName = `${Number(m)}.${Number(day)}`   // "7.1", "7.2" ...
 
-    const dailyHeader = ['구역', '브랜드', '피킹금액(원)', '박스수', '표준시간(h)', 'WMS시간(h)', '실적시간(h)', '가동률(%)']
+    const dailyHeader = ['구역', '브랜드', '피킹금액(원)', '박스수', '작업시간(h)', 'WMS시간(h)']
     const dailyRows: (string | number)[][] = [dailyHeader]
 
-    let dTotAmt = 0, dTotBox = 0, dTotStd = 0, dTotWms = 0, dTotAct = 0
+    let dTotAmt = 0, dTotBox = 0, dTotWave = 0, dTotWms = 0
 
     for (const zone of activeZones) {
       const owner = ZONE_OWNER[zone] ?? ''
       const m2 = map.get(`${d}|${zone}`)
       if (!m2) continue
 
-      const act = m2.act_time_hr
       dailyRows.push([
         zone,
         owner,
         Math.round(m2.pick_amount),
         m2.pick_box,
-        Math.round(m2.std_time_hr * 100) / 100,
+        Math.round(m2.wave_time_hr * 100) / 100,
         m2.wms_time_hr > 0 ? Math.round(m2.wms_time_hr * 100) / 100 : '',
-        Math.round(act * 100) / 100,
-        pct(m2.std_time_hr, act),
       ])
       dTotAmt += m2.pick_amount; dTotBox += m2.pick_box
-      dTotStd += m2.std_time_hr; dTotWms += m2.wms_time_hr; dTotAct += act
+      dTotWave += m2.wave_time_hr; dTotWms += m2.wms_time_hr
     }
 
     // 합계 행
@@ -203,10 +189,8 @@ export function exportZoneExcel(rows: ZoneDaily[], filename: string): void {
       '합계', '',
       Math.round(dTotAmt),
       dTotBox,
-      Math.round(dTotStd * 100) / 100,
+      Math.round(dTotWave * 100) / 100,
       dTotWms > 0 ? Math.round(dTotWms * 100) / 100 : '',
-      Math.round(dTotAct * 100) / 100,
-      pct(dTotStd, dTotAct),
     ])
 
     const ws2 = XLSX.utils.aoa_to_sheet(dailyRows)
@@ -215,10 +199,8 @@ export function exportZoneExcel(rows: ZoneDaily[], filename: string): void {
       { wch: 7 },   // 브랜드
       { wch: 16 },  // 피킹금액
       { wch: 8 },   // 박스수
-      { wch: 12 },  // 표준시간
+      { wch: 12 },  // 작업시간
       { wch: 10 },  // WMS시간
-      { wch: 12 },  // 실적시간
-      { wch: 10 },  // 가동률
     ]
     XLSX.utils.book_append_sheet(wb, ws2, sheetName)
   }

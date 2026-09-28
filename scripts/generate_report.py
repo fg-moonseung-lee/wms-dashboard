@@ -3,8 +3,8 @@
 피킹 생산성 멀티시트 리포트 생성
 
 시트 구성
-  [합계]     : 구역 × 날짜별 실적시간(가로) + 기간 표준/실적/생산성%
-  [MM/DD] × N: 각 날짜의 구역별 표준/실적/생산성%/피킹금액/피킹박스/WMS시간
+  [합계]     : 구역 × 날짜별 작업시간(가로) + 기간 작업시간/WMS시간/시간당금액
+  [MM/DD] × N: 각 날짜의 구역별 작업시간/WMS시간/피킹금액/피킹박스/시간당금액
 
 Usage
   python scripts/generate_report.py --start 2026-07-01 --end 2026-07-05
@@ -13,8 +13,15 @@ Usage
 """
 import argparse
 import json
+import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
+
+# Windows 콘솔 기본 코드페이지(cp949)로 실행 시(파이프로 리다이렉트되는 서브프로세스
+# 체인 등) 특수문자 출력에서 UnicodeEncodeError로 죽는 문제 방지 (wms_rpa.py와 동일 처리)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
@@ -106,13 +113,13 @@ def build_summary(wb: openpyxl.Workbook, data: dict[date, list[dict]]):
     dates = sorted(data.keys())
 
     # ── 컬럼 레이아웃 ──────────────────────────────────────────────────
-    # 고정: [구역(1)] + [날짜별 실적hr(1col×N)] + [기간합계: 표준hr, 실적hr, 생산성%]
+    # 고정: [구역(1)] + [날짜별 작업시간hr(1col×N)] + [기간합계: 작업시간hr, WMS시간hr, 시간당금액]
     COL_ZONE   = 1
     COL_DATES  = {d: 2 + i for i, d in enumerate(dates)}   # 날짜별 열
-    COL_STD    = 2 + len(dates)       # 기간 표준
-    COL_ACT    = COL_STD + 1          # 기간 실적
-    COL_PROD   = COL_ACT  + 1         # 생산성%
-    TOTAL_COLS = COL_PROD
+    COL_WAVE   = 2 + len(dates)       # 기간 작업시간
+    COL_WMS    = COL_WAVE + 1         # 기간 WMS시간
+    COL_PPH    = COL_WMS  + 1         # 시간당금액(작업시간 기준)
+    TOTAL_COLS = COL_PPH
 
     # ── 1행: 헤더 ──────────────────────────────────────────────────────
     ws.row_dimensions[1].height = 30
@@ -122,22 +129,23 @@ def build_summary(wb: openpyxl.Workbook, data: dict[date, list[dict]]):
     for d, col in COL_DATES.items():
         _hdr(ws, 1, col, f"{d.month}.{d.day}")
         ws.column_dimensions[get_column_letter(col)].width = 10
-    _hdr(ws, 1, COL_STD,  "기간\n표준(hr)", fill=_fill("2F75B6"))
-    _hdr(ws, 1, COL_ACT,  "기간\n실적(hr)", fill=_fill("2F75B6"))
-    _hdr(ws, 1, COL_PROD, "생산성%",        fill=_fill("2F75B6"))
-    for col in [COL_STD, COL_ACT, COL_PROD]:
-        ws.column_dimensions[get_column_letter(col)].width = 11
+    _hdr(ws, 1, COL_WAVE, "기간\n작업시간(hr)", fill=_fill("2F75B6"))
+    _hdr(ws, 1, COL_WMS,  "기간\nWMS시간(hr)",  fill=_fill("2F75B6"))
+    _hdr(ws, 1, COL_PPH,  "시간당금액\n(원/h)",  fill=_fill("2F75B6"))
+    for col in [COL_WAVE, COL_WMS, COL_PPH]:
+        ws.column_dimensions[get_column_letter(col)].width = 12
 
     # ── 구역별 집계 ────────────────────────────────────────────────────
-    # {zone: {date: {std, act}}}
+    # {zone: {date: {wave, wms, amt}}}
     zone_data: dict[str, dict] = {z: {} for z in ZONE_ORDER}
     for d, rows in data.items():
         for r in rows:
             z = r["zone"]
             if z in zone_data:
                 zone_data[z][d] = {
-                    "std": r.get("std_time_hr", 0) or 0,
-                    "act": r.get("act_time_hr", 0) or 0,
+                    "wave": r.get("wave_time_hr", 0) or 0,
+                    "wms":  r.get("wms_time_hr", 0) or 0,
+                    "amt":  r.get("pick_amount", 0) or 0,
                 }
 
     # ── 데이터 행 ──────────────────────────────────────────────────────
@@ -150,46 +158,47 @@ def build_summary(wb: openpyxl.Workbook, data: dict[date, list[dict]]):
 
         _cell(ws, row, COL_ZONE, zone, fill=fill, font=BOLD_FONT, align=CENTER)
 
-        period_std = period_act = 0.0
+        period_wave = period_wms = period_amt = 0.0
         for d, col in COL_DATES.items():
             v = zone_data[zone].get(d, {})
-            act = v.get("act", 0)
-            std = v.get("std", 0)
-            _cell(ws, row, col, act if act else None, fmt='0.00', fill=fill)
-            period_std += std
-            period_act += act
+            wave = v.get("wave", 0)
+            _cell(ws, row, col, wave if wave else None, fmt='0.00', fill=fill)
+            period_wave += wave
+            period_wms  += v.get("wms", 0)
+            period_amt  += v.get("amt", 0)
 
-        _cell(ws, row, COL_STD,  round(period_std, 4) if period_std else None, fmt='0.00', fill=fill)
-        _cell(ws, row, COL_ACT,  round(period_act, 4) if period_act else None, fmt='0.00', fill=fill)
-        prod = (period_std / period_act * 100) if period_act else None
-        _cell(ws, row, COL_PROD, round(prod, 1) if prod else None,
-              fmt='0.0"%"', fill=fill)
+        _cell(ws, row, COL_WAVE, round(period_wave, 4) if period_wave else None, fmt='0.00', fill=fill)
+        _cell(ws, row, COL_WMS,  round(period_wms, 4)  if period_wms  else None, fmt='0.00', fill=fill)
+        pph = (period_amt / period_wave) if period_wave else None
+        _cell(ws, row, COL_PPH, round(pph) if pph else None,
+              fmt='#,##0', fill=fill)
 
     # ── 합계 행 ────────────────────────────────────────────────────────
     sum_row = 2 + len(active_zones)
     ws.row_dimensions[sum_row].height = 18
     _cell(ws, sum_row, COL_ZONE, "합계", fill=SUM_FILL, font=BOLD_FONT, align=CENTER)
 
-    total_std = total_act = 0.0
+    total_wave = total_wms = total_amt = 0.0
     for d, col in COL_DATES.items():
         col_total = sum(
-            zone_data[z].get(d, {}).get("act", 0) for z in active_zones
+            zone_data[z].get(d, {}).get("wave", 0) for z in active_zones
         )
         _cell(ws, sum_row, col, round(col_total, 2) if col_total else None,
               fmt='0.00', fill=SUM_FILL, font=BOLD_FONT)
 
     for z in active_zones:
         for d in dates:
-            total_std += zone_data[z].get(d, {}).get("std", 0)
-            total_act += zone_data[z].get(d, {}).get("act", 0)
+            total_wave += zone_data[z].get(d, {}).get("wave", 0)
+            total_wms  += zone_data[z].get(d, {}).get("wms", 0)
+            total_amt  += zone_data[z].get(d, {}).get("amt", 0)
 
-    _cell(ws, sum_row, COL_STD,  round(total_std, 4) if total_std else None,
+    _cell(ws, sum_row, COL_WAVE, round(total_wave, 4) if total_wave else None,
           fmt='0.00', fill=SUM_FILL, font=BOLD_FONT)
-    _cell(ws, sum_row, COL_ACT,  round(total_act, 4) if total_act else None,
+    _cell(ws, sum_row, COL_WMS,  round(total_wms, 4) if total_wms else None,
           fmt='0.00', fill=SUM_FILL, font=BOLD_FONT)
-    prod_total = (total_std / total_act * 100) if total_act else None
-    _cell(ws, sum_row, COL_PROD, round(prod_total, 1) if prod_total else None,
-          fmt='0.0"%"', fill=SUM_FILL, font=BOLD_FONT)
+    pph_total = (total_amt / total_wave) if total_wave else None
+    _cell(ws, sum_row, COL_PPH, round(pph_total) if pph_total else None,
+          fmt='#,##0', fill=SUM_FILL, font=BOLD_FONT)
 
     # ── 전체 테두리 ────────────────────────────────────────────────────
     last_row = sum_row
@@ -215,12 +224,11 @@ def build_daily(wb: openpyxl.Workbook, d: date, rows: list[dict]):
     # ── 컬럼 정의 ──────────────────────────────────────────────────────
     COLS = [
         ("구역",          12, None),
-        ("표준시간(hr)",  13, '0.0000'),
-        ("실적시간(hr)",  13, '0.0000'),
-        ("생산성%",       10, '0.0"%"'),
+        ("작업시간(hr)",  13, '0.0000'),
+        ("WMS시간(hr)",   13, '0.0000'),
         ("피킹금액",      16, '#,##0'),
         ("피킹박스",      10, '#,##0'),
-        ("WMS근무(hr)",   12, '0.00'),
+        ("시간당금액",    12, '#,##0'),
     ]
     COL_NAMES  = [c[0] for c in COLS]
     COL_WIDTHS = [c[1] for c in COLS]
@@ -254,19 +262,19 @@ def build_daily(wb: openpyxl.Workbook, d: date, rows: list[dict]):
     for i, zone in enumerate(active):
         row = i + 3
         r = zone_rows[zone]
-        std = r.get("std_time_hr") or 0
-        act = r.get("act_time_hr") or 0
-        prod = (std / act * 100) if act else None
+        wave = r.get("wave_time_hr") or 0
+        wms  = r.get("wms_time_hr") or 0
+        amt  = r.get("pick_amount") or 0
+        pph = (amt / wave) if wave else None
         fill = BAND_FILL if i % 2 == 0 else WHITE_FILL
 
         values = [
             zone,
-            round(std, 4),
-            round(act, 4),
-            round(prod, 1) if prod else None,
+            round(wave, 4),
+            round(wms, 4),
             r.get("pick_amount") or None,
             r.get("pick_box") or None,
-            round(r.get("wms_time_hr") or 0, 2) or None,
+            round(pph) if pph else None,
         ]
         for j, (val, fmt) in enumerate(zip(values, COL_FMTS), 1):
             align = CENTER if j == 1 else RIGHT
@@ -277,21 +285,19 @@ def build_daily(wb: openpyxl.Workbook, d: date, rows: list[dict]):
     sum_row = 3 + len(active)
     ws.row_dimensions[sum_row].height = 18
 
-    tot_std = sum((zone_rows[z].get("std_time_hr") or 0) for z in active)
-    tot_act = sum((zone_rows[z].get("act_time_hr") or 0) for z in active)
-    tot_amt = sum((zone_rows[z].get("pick_amount") or 0) for z in active)
-    tot_box = sum((zone_rows[z].get("pick_box")    or 0) for z in active)
-    tot_wms = sum((zone_rows[z].get("wms_time_hr") or 0) for z in active)
-    tot_prd = (tot_std / tot_act * 100) if tot_act else None
+    tot_wave = sum((zone_rows[z].get("wave_time_hr") or 0) for z in active)
+    tot_wms  = sum((zone_rows[z].get("wms_time_hr")  or 0) for z in active)
+    tot_amt  = sum((zone_rows[z].get("pick_amount")  or 0) for z in active)
+    tot_box  = sum((zone_rows[z].get("pick_box")     or 0) for z in active)
+    tot_pph  = (tot_amt / tot_wave) if tot_wave else None
 
     sum_vals = [
         "합계",
-        round(tot_std, 4),
-        round(tot_act, 4),
-        round(tot_prd, 1) if tot_prd else None,
+        round(tot_wave, 4),
+        round(tot_wms, 4),
         round(tot_amt),
         int(tot_box),
-        round(tot_wms, 2),
+        round(tot_pph) if tot_pph else None,
     ]
     for j, (val, fmt) in enumerate(zip(sum_vals, COL_FMTS), 1):
         align = CENTER if j == 1 else RIGHT

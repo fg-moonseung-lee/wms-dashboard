@@ -47,6 +47,11 @@ const IcoTerminal = () => (
     <line x1="12" y1="17" x2="12" y2="21" /><path d="m7 8 3 3-3 3" /><line x1="13" y1="14" x2="17" y2="14" />
   </svg>
 )
+const IcoTrigger = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polygon points="5 3 19 12 5 21 5 3" />
+  </svg>
+)
 
 /* ── 메뉴 데이터 ─────────────────────────────────────── */
 interface Leaf {
@@ -59,7 +64,8 @@ interface Group {
   label: string
   Icon: () => JSX.Element
   comingSoon?: boolean
-  to?: string          // coming-soon 아이템의 링크 (선택)
+  standalone?: boolean // 하위메뉴 없이 그 자체로 링크인 항목 (comingSoon과 달리 활성 상태로 표시)
+  to?: string          // coming-soon / standalone 아이템의 링크 (선택)
   children: Leaf[]
 }
 interface Category {
@@ -108,6 +114,15 @@ const MENU: Category[] = [
       {
         kind: 'group', label: '단말기 관리', Icon: IcoTerminal,
         comingSoon: true, to: '/equipment/terminal', children: [],
+      },
+    ],
+  },
+  {
+    label: '데이터 관리',
+    items: [
+      {
+        kind: 'group', label: '생산성 집계 실행', Icon: IcoTrigger,
+        standalone: true, to: '/trigger', children: [],
       },
     ],
   },
@@ -263,6 +278,19 @@ export default function Sidebar() {
                           <span className="opacity-60 shrink-0"><item.Icon /></span>
                           <span className="flex-1 text-left">{item.label}</span>
                           <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-700/80 text-slate-500 font-medium shrink-0">예정</span>
+                        </NavLink>
+                      ) : item.standalone && item.to ? (
+                        <NavLink
+                          to={item.to}
+                          className={({ isActive }) => [
+                            'flex items-center gap-2.5 mx-2 px-3 py-2.5 rounded-md text-[14px] font-medium transition-all duration-150',
+                            isActive
+                              ? 'bg-letusBlue text-white'
+                              : 'text-slate-300 hover:text-white hover:bg-white/6',
+                          ].join(' ')}
+                        >
+                          <span className="opacity-70 shrink-0"><item.Icon /></span>
+                          <span className="flex-1 text-left">{item.label}</span>
                         </NavLink>
                       ) : (
                         <button

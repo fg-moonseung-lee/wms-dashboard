@@ -1,5 +1,5 @@
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, Legend,
+  Bar, XAxis, YAxis, Tooltip, Legend,
   ResponsiveContainer, CartesianGrid, ComposedChart, Line,
 } from 'recharts'
 import { useState } from 'react'
@@ -19,23 +19,18 @@ interface Props { period: Period; metric: Metric; granularity: Granularity }
 const fmtM   = (v: number) => `${v.toFixed(1)}백만`
 const fmtBox = (v: number) => `${v.toLocaleString('ko-KR')}박스`
 const fmtNum = (v: number) => v.toLocaleString('ko-KR')
-const fmtPct = (v: number) => `${v.toFixed(1)}%`
 
 function metricVal(r: ZoneDaily, metric: Metric) {
   return metric === 'amount' ? (r.pick_amount ?? 0) : (r.pick_box ?? 0)
 }
 function metricScale(metric: Metric) { return metric === 'amount' ? 1_000_000 : 1 }
-function metricFmt(v: number, metric: Metric) {
-  return metric === 'amount' ? fmtM(v / 1_000_000) : fmtBox(v)
-}
 function metricUnit(metric: Metric)  { return metric === 'amount' ? '백만원' : '박스' }
 
 /* ── Zone별 집계 ── */
 interface ZoneRow {
   zone: string
-  std: number; act: number
+  wave: number; wms: number
   box: number; amount: number
-  eff: number
   days: number
 }
 
@@ -43,20 +38,19 @@ function aggregateZones(rows: ZoneDaily[]): ZoneRow[] {
   const map = new Map<string, ZoneRow>()
   const dayCnt = new Map<string, Set<string>>()
   for (const r of rows) {
-    if (!map.has(r.zone)) map.set(r.zone, { zone: r.zone, std: 0, act: 0, box: 0, amount: 0, eff: 0, days: 0 })
+    if (!map.has(r.zone)) map.set(r.zone, { zone: r.zone, wave: 0, wms: 0, box: 0, amount: 0, days: 0 })
     if (!dayCnt.has(r.zone)) dayCnt.set(r.zone, new Set())
     const e = map.get(r.zone)!
-    e.std    += r.std_time_hr
-    e.act    += r.act_time_hr
+    e.wave   += r.wave_time_hr ?? 0
+    e.wms    += r.wms_time_hr  ?? 0
     e.box    += r.pick_box    ?? 0
     e.amount += r.pick_amount ?? 0
     dayCnt.get(r.zone)!.add(r.work_date)
   }
   return [...map.values()].map(e => ({
     ...e,
-    eff:  e.act > 0 ? (e.std / e.act) * 100 : 0,
     days: dayCnt.get(e.zone)!.size,
-  })).sort((a, b) => b.eff - a.eff)
+  })).sort((a, b) => (b.amount / (b.wave || 1)) - (a.amount / (a.wave || 1)))
 }
 
 /* ── 구역별 실적 추이 (전체 데이터 기반, granularity) ── */
@@ -97,37 +91,33 @@ function ZoneTable({ zones, metric, onSelect }: { zones: ZoneRow[]; metric: Metr
         <thead>
           <tr className="border-b border-gray-100">
             <th className="text-left py-2 px-3 text-gray-400 font-medium">구역</th>
-            <th className="text-right py-2 px-3 text-gray-400 font-medium">가동률</th>
+            <th className="text-right py-2 px-3 text-gray-400 font-medium">시간당생산성</th>
             <th className="text-right py-2 px-3 text-gray-400 font-medium">{isAmt ? '금액(백만)' : '박스수'}</th>
-            <th className="text-right py-2 px-3 text-gray-400 font-medium">표준시간</th>
-            <th className="text-right py-2 px-3 text-gray-400 font-medium">실적시간</th>
+            <th className="text-right py-2 px-3 text-gray-400 font-medium">작업시간</th>
+            <th className="text-right py-2 px-3 text-gray-400 font-medium">WMS시간</th>
             <th className="text-right py-2 px-3 text-gray-400 font-medium">가동일수</th>
           </tr>
         </thead>
         <tbody>
-          {zones.map((z, i) => (
+          {zones.map((z, i) => {
+            const pph = z.wave > 0 ? (isAmt ? (z.amount / 1_000_000) / z.wave : z.box / z.wave) : 0
+            return (
             <tr key={z.zone}
               className={[i % 2 === 0 ? 'bg-gray-50/50' : '', onSelect ? 'cursor-pointer hover:bg-blue-50/40 transition-colors' : ''].join(' ')}
               onClick={() => onSelect?.(z.zone)}>
               <td className="py-2 px-3 font-medium text-gray-700">{z.zone}</td>
-              <td className="py-2 px-3 text-right">
-                <span className={[
-                  'inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold',
-                  z.eff >= 100 ? 'bg-emerald-50 text-emerald-600'
-                    : z.eff >= 80 ? 'bg-orange-50 text-orange-500'
-                    : 'bg-red-50 text-red-500',
-                ].join(' ')}>
-                  {fmtPct(z.eff)}
-                </span>
+              <td className="py-2 px-3 text-right text-gray-700">
+                {isAmt ? `${pph.toFixed(1)}백만/h` : `${fmtNum(Math.round(pph))}박스/h`}
               </td>
               <td className="py-2 px-3 text-right text-gray-700">
                 {isAmt ? fmtM(z.amount / 1_000_000) : fmtNum(z.box)}
               </td>
-              <td className="py-2 px-3 text-right text-gray-500">{z.std.toFixed(1)}h</td>
-              <td className="py-2 px-3 text-right text-gray-500">{z.act.toFixed(1)}h</td>
+              <td className="py-2 px-3 text-right text-gray-500">{z.wave.toFixed(1)}h</td>
+              <td className="py-2 px-3 text-right text-gray-500">{z.wms.toFixed(1)}h</td>
               <td className="py-2 px-3 text-right text-gray-500">{z.days}일</td>
             </tr>
-          ))}
+            )
+          })}
         </tbody>
       </table>
     </div>
@@ -182,14 +172,13 @@ export default function BrandDetail({ period, metric, granularity }: Props) {
   const chartOwnerRows = granularity === 'day' ? ownerRows : ownerAllRows
 
   /* 선택 브랜드 KPI — 선택 기간 기준 */
-  let totalStd = 0, totalAct = 0, totalBox = 0, totalAmt = 0
+  let totalWave = 0, totalWms = 0, totalBox = 0, totalAmt = 0
   for (const r of ownerRows) {
-    totalStd += r.std_time_hr
-    totalAct += r.act_time_hr
-    totalBox += r.pick_box ?? 0
-    totalAmt += r.pick_amount ?? 0
+    totalWave += r.wave_time_hr ?? 0
+    totalWms  += r.wms_time_hr  ?? 0
+    totalBox  += r.pick_box ?? 0
+    totalAmt  += r.pick_amount ?? 0
   }
-  const eff = totalAct > 0 ? (totalStd / totalAct) * 100 : 0
   const unit = metricUnit(metric)
   const isAmt = metric === 'amount'
 
@@ -239,10 +228,8 @@ export default function BrandDetail({ period, metric, granularity }: Props) {
                 value={isAmt ? fmtM(totalAmt / 1_000_000) : fmtBox(totalBox)}
                 color={OWNER_COLOR[selectedOwner]}
               />
-              <StatBadge label="평균 가동률" value={fmtPct(eff)}
-                color={eff >= 100 ? '#10b981' : eff >= 80 ? '#f97316' : '#ef4444'} />
-              <StatBadge label="표준시간 합계" value={`${totalStd.toFixed(1)}h`} color="#64748b" />
-              <StatBadge label="실적시간 합계" value={`${totalAct.toFixed(1)}h`} color="#64748b" />
+              <StatBadge label="작업시간 합계" value={`${totalWave.toFixed(1)}h`} color="#64748b" />
+              <StatBadge label="WMS시간 합계" value={`${totalWms.toFixed(1)}h`} color="#64748b" />
               <StatBadge label="활동 구역수" value={String(zoneAggs.length)} color="#64748b" />
             </div>
           )}
@@ -252,8 +239,8 @@ export default function BrandDetail({ period, metric, granularity }: Props) {
       {/* 구역별 실적표 + 구역별 추이 나란히 */}
       <div className="grid grid-cols-2 gap-5">
 
-        {/* 구역별 실적표 (가동률 순, 선택 기간) */}
-        <SectionCard title={`${selectedOwner} · 구역별 실적 (가동률 순)`}>
+        {/* 구역별 실적표 (시간당생산성 순, 선택 기간) */}
+        <SectionCard title={`${selectedOwner} · 구역별 실적 (시간당생산성 순)`}>
           {zoneAggs.length === 0 ? (
             <p className="text-xs text-gray-300 text-center py-8">데이터 없음</p>
           ) : (

@@ -14,6 +14,7 @@ import InboundWorkerPage from './pages/inbound/WorkerPage'
 import InboundCenterPage from './pages/inbound/CenterPage'
 import ComingSoon from './pages/ComingSoon'
 import Home from './pages/Home'
+import Trigger from './pages/Trigger'
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
           </Route>
           <Route path="/cbm"                 element={<ComingSoon title="CBM관리" />} />
           <Route path="/equipment/terminal"  element={<ComingSoon title="단말기 관리" />} />
+          <Route path="/trigger"             element={<Trigger />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

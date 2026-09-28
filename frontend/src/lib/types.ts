@@ -15,23 +15,23 @@ export interface HierarchyFilter {
 }
 
 /* ── 집계 결과 ───────────────────────────────────── */
+// 2026-09-28: 가동률(표준/실적시간 비율) 개념 제거 — wave_time_hr(작업시간)/
+// wms_time_hr(전체 로그인시간) 두 기준의 시간당 생산성으로 대체.
 export interface ZoneAgg {
   owner:        string
   zone:         string
-  std_time_hr:  number
-  act_time_hr:  number
+  wave_time_hr: number
+  wms_time_hr:  number
   pick_box:     number
   pick_amount:  number
-  efficiency:   number   // std/act × 100
 }
 
 export interface OwnerAgg {
   owner:        string
-  std_time_hr:  number
-  act_time_hr:  number
+  wave_time_hr: number
+  wms_time_hr:  number
   pick_box:     number
   pick_amount:  number
-  efficiency:   number
 }
 
 export interface WorkerAgg {
@@ -39,32 +39,19 @@ export interface WorkerAgg {
   zone:         string
   worker_name:  string
   shift:        string | null
-  std_time_hr:  number
-  act_time_hr:  number
+  wave_time_hr: number
+  wms_time_hr:  number
   pick_box:     number
   pick_amount:  number
-  efficiency:   number
 }
 
 /* 날짜별 트렌드용 */
 export interface DailyPoint {
-  work_date:   string
-  owner?:      string
-  zone?:       string
-  std_time_hr: number
-  act_time_hr: number
-  pick_box:    number
-  pick_amount: number
-}
-
-/* 주간 트렌드용 */
-export interface WeekPoint {
-  weekLabel:   string   // '6/20~6/26'
-  weekStart:   string   // 'YYYY-MM-DD'
-  owner?:      string
-  std_time_hr: number
-  act_time_hr: number
-  pick_box:    number
-  pick_amount: number
-  efficiency:  number
+  work_date:    string
+  owner?:       string
+  zone?:        string
+  wave_time_hr: number
+  wms_time_hr:  number
+  pick_box:     number
+  pick_amount:  number
 }

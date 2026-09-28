@@ -22,6 +22,12 @@ from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import execute_values
 
+# Windows 콘솔 기본 코드페이지(cp949)로 실행 시(파이프로 리다이렉트되는 서브프로세스
+# 체인 등) 특수문자 출력에서 UnicodeEncodeError로 죽는 문제 방지 (wms_rpa.py와 동일 처리)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 DB_URL = os.getenv("SUPABASE_POOLER_URL") or os.getenv("SUPABASE_DB_URL")
@@ -52,12 +58,12 @@ def load_workers(cur, date_str):
     # 멱등: 해당 날짜분 먼저 삭제 후 재삽입 (재실행 시 중복 방지)
     cur.execute("DELETE FROM picking_worker_daily WHERE work_date = %s", (date_str,))
     rows = [(d["work_date"], d["center"], d["owner"], d["zone"], d["worker_name"],
-             d.get("shift"), d["std_time_hr"], d["act_time_hr"],
-             d["pick_amount"], d["pick_box"], d.get("wms_time_hr")) for d in data]
+             d.get("shift"), d["pick_amount"], d["pick_box"],
+             d.get("wave_time_hr"), d.get("wms_time_hr")) for d in data]
     execute_values(cur, """
         INSERT INTO picking_worker_daily
             (work_date, center, owner, zone, worker_name, shift,
-             std_time_hr, act_time_hr, pick_amount, pick_box, wms_time_hr)
+             pick_amount, pick_box, wave_time_hr, wms_time_hr)
         VALUES %s
     """, rows)
     print(f"  [picking_worker_daily] {date_str}: {len(rows)}명 적재")
@@ -72,13 +78,13 @@ def load_zones(cur, date_str):
     data = json.loads(p.read_text(encoding="utf-8"))
     cur.execute("DELETE FROM picking_zone_daily WHERE work_date = %s", (date_str,))
     rows = [(d["work_date"], d["center"], d["owner"], d["zone"],
-             d["std_time_hr"], d["act_time_hr"], d["pick_amount"], d["pick_box"],
-             d.get("wms_time_hr"))
+             d["pick_amount"], d["pick_box"],
+             d.get("wave_time_hr"), d.get("wms_time_hr"))
             for d in data]
     execute_values(cur, """
         INSERT INTO picking_zone_daily
             (work_date, center, owner, zone,
-             std_time_hr, act_time_hr, pick_amount, pick_box, wms_time_hr)
+             pick_amount, pick_box, wave_time_hr, wms_time_hr)
         VALUES %s
     """, rows)
     print(f"  [picking_zone_daily]   {date_str}: {len(rows)}구역 적재")
@@ -94,9 +100,13 @@ def main():
     conn = _conn()
     cur = conn.cursor()
     try:
-        # wms_time_hr 컬럼 없으면 추가 (최초 1회)
-        cur.execute("ALTER TABLE picking_zone_daily   ADD COLUMN IF NOT EXISTS wms_time_hr NUMERIC(10,4)")
-        cur.execute("ALTER TABLE picking_worker_daily ADD COLUMN IF NOT EXISTS wms_time_hr NUMERIC(10,4)")
+        # wave_time_hr/wms_time_hr 컬럼 없으면 추가 (최초 1회).
+        # std_time_hr/act_time_hr/efficiency는 가동률 개념 제거로 더 이상 안 씀 —
+        # 과거 데이터 보존을 위해 컬럼 자체는 DROP하지 않음 (2026-09-28).
+        cur.execute("ALTER TABLE picking_zone_daily   ADD COLUMN IF NOT EXISTS wms_time_hr  NUMERIC(10,4)")
+        cur.execute("ALTER TABLE picking_worker_daily ADD COLUMN IF NOT EXISTS wms_time_hr  NUMERIC(10,4)")
+        cur.execute("ALTER TABLE picking_zone_daily   ADD COLUMN IF NOT EXISTS wave_time_hr NUMERIC(10,4)")
+        cur.execute("ALTER TABLE picking_worker_daily ADD COLUMN IF NOT EXISTS wave_time_hr NUMERIC(10,4)")
         if args.wipe:
             wipe(cur)
         for d in args.date:

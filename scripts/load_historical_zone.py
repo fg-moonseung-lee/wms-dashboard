@@ -53,6 +53,7 @@ MAX_COL  = 35
 # 총 피킹금액 행 기준 오프셋
 OFF_BOX = 2   # 총 피킹 박스수
 OFF_STD = 3   # 표준시간(작업시간)[hr]
+OFF_WMS = 13  # WMS 근무시간[hr] (실적시간 바로 위 = 피킹금액 +13)
 OFF_ACT = 14  # 투입시간[hr]  (표준시간 행 +11 = 피킹금액 행 +14)
 
 
@@ -139,6 +140,7 @@ def parse_monthly_file(filepath: Path, year_hint: int) -> list:
         owner, center, db_zone = ZONE_MAP[zone_label]
         box_row = amount_row + OFF_BOX
         std_row = amount_row + OFF_STD
+        wms_row = amount_row + OFF_WMS
         act_row = amount_row + OFF_ACT
 
         for col_idx, work_date in date_cols.items():
@@ -151,6 +153,7 @@ def parse_monthly_file(filepath: Path, year_hint: int) -> list:
             amount = _to_float(_get(amount_row))
             box    = _to_float(_get(box_row))
             std    = _to_float(_get(std_row))
+            wms    = _to_float(_get(wms_row))
             act    = _to_float(_get(act_row))
 
             if amount == 0 and box == 0 and std == 0 and act == 0:
@@ -163,6 +166,7 @@ def parse_monthly_file(filepath: Path, year_hint: int) -> list:
                 "zone":        db_zone,
                 "std_time_hr": round(std, 4),
                 "act_time_hr": round(act, 4),
+                "wms_time_hr": round(wms, 4) if wms > 0 else None,
                 "pick_amount": int(amount),
                 "pick_box":    int(box),
             })
@@ -218,10 +222,11 @@ def main():
     if args.dry_run:
         print("\n[DRY RUN] DB 미적재 - 샘플 10건:")
         for r in all_records[:10]:
+            wms_s = f"{r['wms_time_hr']:.2f}h" if r.get('wms_time_hr') else "-"
             print(
                 f"  {r['work_date']}  {r['owner']:6s} {r['zone']:5s}"
                 f"  금액={r['pick_amount']:>12,}  박스={r['pick_box']:>6,}"
-                f"  std={r['std_time_hr']:.2f}h  act={r['act_time_hr']:.2f}h"
+                f"  std={r['std_time_hr']:.2f}h  act={r['act_time_hr']:.2f}h  wms={wms_s}"
             )
         # 구역 통계
         from collections import Counter
@@ -234,6 +239,12 @@ def main():
     conn = db_connect()
     cur = conn.cursor()
     try:
+        # 컬럼 없으면 추가 (최초 1회)
+        cur.execute("""
+            ALTER TABLE picking_zone_daily
+            ADD COLUMN IF NOT EXISTS wms_time_hr NUMERIC(10,4)
+        """)
+
         dates = sorted(set(r["work_date"] for r in all_records))
         print(f"날짜 범위: {dates[0]} ~ {dates[-1]}  ({len(dates)}일)")
 
@@ -244,7 +255,8 @@ def main():
 
         rows = [
             (r["work_date"], r["center"], r["owner"], r["zone"],
-             r["std_time_hr"], r["act_time_hr"], r["pick_amount"], r["pick_box"])
+             r["std_time_hr"], r["act_time_hr"], r["pick_amount"], r["pick_box"],
+             r.get("wms_time_hr"))
             for r in all_records
         ]
         execute_values(
@@ -252,7 +264,7 @@ def main():
             """
             INSERT INTO picking_zone_daily
                 (work_date, center, owner, zone,
-                 std_time_hr, act_time_hr, pick_amount, pick_box)
+                 std_time_hr, act_time_hr, pick_amount, pick_box, wms_time_hr)
             VALUES %s
             """,
             rows,

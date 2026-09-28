@@ -92,16 +92,16 @@ ANOMALY_CHECKS = [check_price_gaps]
 # ─────────────────────────────────────────────────────────────────────
 def summarize_picking(cur, target: date) -> dict:
     cur.execute("""
-        SELECT COUNT(*), COALESCE(SUM(std_time_hr),0), COALESCE(SUM(act_time_hr),0),
+        SELECT COUNT(*), COALESCE(SUM(wave_time_hr),0),
                COALESCE(SUM(pick_amount),0), COALESCE(SUM(pick_box),0)
         FROM picking_zone_daily WHERE work_date = %s
     """, (target,))
-    n_zones, std, act, amt, box = cur.fetchone()
+    n_zones, wave, amt, box = cur.fetchone()
     cur.execute("SELECT COUNT(*) FROM picking_worker_daily WHERE work_date = %s", (target,))
     n_workers = cur.fetchone()[0]
     return {
         "구역수": n_zones, "작업자수": n_workers,
-        "표준시간": float(std), "실적시간": float(act),
+        "작업시간": float(wave),
         "피킹금액": float(amt), "피킹박스": int(box),
     }
 
@@ -165,15 +165,15 @@ def build_summary_sheet(wb, target: date, picking: dict, inbound: list[dict]):
     # 피킹 요약
     ws.cell(row=row, column=1, value="피킹 실적").font = BOLD_FONT
     row += 1
-    headers = ["구역수", "작업자수", "표준시간(h)", "실적시간(h)", "피킹금액", "피킹박스"]
+    headers = ["구역수", "작업자수", "작업시간(h)", "피킹금액", "피킹박스"]
     for j, h in enumerate(headers, 1):
         _hdr(ws, row, j, h)
     row += 1
-    vals = [picking["구역수"], picking["작업자수"], round(picking["표준시간"], 1),
-            round(picking["실적시간"], 1), round(picking["피킹금액"]), picking["피킹박스"]]
+    vals = [picking["구역수"], picking["작업자수"], round(picking["작업시간"], 1),
+            round(picking["피킹금액"]), picking["피킹박스"]]
     for j, v in enumerate(vals, 1):
         ws.cell(row=row, column=j, value=v).alignment = RIGHT
-    _border_block(ws, row - 1, row, 1, 6)
+    _border_block(ws, row - 1, row, 1, 5)
     row += 3
 
     # 입고 요약

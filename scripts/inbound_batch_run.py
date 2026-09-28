@@ -20,6 +20,12 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+# Windows 콘솔 기본 코드페이지(cp949)로 실행 시(파이프로 리다이렉트되는 서브프로세스
+# 체인 등) 특수문자 출력에서 UnicodeEncodeError로 죽는 문제 방지 (wms_rpa.py와 동일 처리)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 BASE_DIR  = Path(__file__).resolve().parent.parent
 TEMP_DIR  = BASE_DIR / "data" / "temp"
 DAILY_DIR = BASE_DIR / "data" / "daily"
@@ -36,9 +42,12 @@ def date_range(start: date, end: date):
 
 
 def has_raw(brand: str, d: date) -> bool:
+    """입고/이동 raw 중 하나라도 있으면 처리 대상 — 명절 등 정상입고 없이
+    이동(피킹 준비용 재배치)만 있는 날도 있음(2026-09-24 추석 등)."""
     mmdd = d.strftime("%m%d")
     folder = RAW_BASE / d.strftime("%m")
-    return (folder / f"입고_{brand}_{mmdd}.xlsx").exists()
+    return (folder / f"입고_{brand}_{mmdd}.xlsx").exists() or \
+           (folder / f"이동_{brand}_{mmdd}.xlsx").exists()
 
 
 def run_automation(brand: str, d: date) -> bool:

@@ -3,7 +3,6 @@ import {
   ComposedChart, Bar, Line, BarChart,
   XAxis, YAxis, Tooltip, Legend,
   ResponsiveContainer, CartesianGrid,
-  PieChart, Pie, Cell,
 } from 'recharts'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAllZoneData } from '../../hooks/useAllZoneData'
@@ -21,21 +20,11 @@ interface Props { period: Period; metric: Metric; granularity: Granularity }
 const fmtM   = (v: number) => `${v.toFixed(1)}백만`
 const fmtBox = (v: number) => `${v.toLocaleString('ko-KR')}박스`
 const fmtNum = (v: number) => v.toLocaleString('ko-KR')
-const fmtPct = (v: number) => `${v.toFixed(1)}%`
 
 function metricVal(r: ZoneDaily, metric: Metric) {
   return metric === 'amount' ? (r.pick_amount ?? 0) : (r.pick_box ?? 0)
 }
 function metricScale(metric: Metric) { return metric === 'amount' ? 1_000_000 : 1 }
-
-function effColor(eff: number) {
-  return eff >= 100 ? '#10b981' : eff >= 80 ? '#f97316' : '#ef4444'
-}
-function effBadge(eff: number) {
-  return eff >= 100 ? 'bg-emerald-50 text-emerald-600'
-    : eff >= 80 ? 'bg-orange-50 text-orange-500'
-    : 'bg-red-50 text-red-500'
-}
 
 function SectionCard({ title, subtitle, children }: {
   title: string; subtitle?: string; children: React.ReactNode
@@ -83,19 +72,18 @@ export default function CenterPage({ period, metric, granularity }: Props) {
   const centerKpi = CENTERS.map(center => {
     const cOwners = CENTER_OWNERS[center]
     const cRows = pRows.filter(r => cOwners.includes(r.owner))
-    let std = 0, act = 0, val = 0
+    let wave = 0, val = 0
     const zones = new Set<string>()
     for (const r of cRows) {
-      std += r.std_time_hr
-      act += r.act_time_hr
+      wave += r.wave_time_hr ?? 0
       val += metricVal(r, metric) / scale
       zones.add(r.zone)
     }
     return {
       center,
       val: +val.toFixed(2),
-      eff: act > 0 ? (std / act) * 100 : 0,
-      std, act,
+      wave,
+      pph: wave > 0 ? val / wave : 0,
       zones: zones.size,
       owners: cOwners,
     }
@@ -142,13 +130,13 @@ export default function CenterPage({ period, metric, granularity }: Props) {
   const selOwners = selectedCenter ? CENTER_OWNERS[selectedCenter] : []
   const brandKpis = selOwners.map(owner => {
     const oRows = pRows.filter(r => r.owner === owner)
-    let std = 0, act = 0, val = 0
+    let wave = 0, val = 0
     const zones = new Set<string>()
     for (const r of oRows) {
-      std += r.std_time_hr; act += r.act_time_hr
+      wave += r.wave_time_hr ?? 0
       val += metricVal(r, metric) / scale; zones.add(r.zone)
     }
-    return { owner, val: +val.toFixed(2), eff: act > 0 ? (std / act) * 100 : 0, std, act, zones: zones.size }
+    return { owner, val: +val.toFixed(2), wave, zones: zones.size }
   })
   const selTrendMap = new Map<string, Record<string, number>>()
   for (const r of chartRows.filter(r => selOwners.includes(r.owner))) {
@@ -188,22 +176,15 @@ export default function CenterPage({ period, metric, granularity }: Props) {
               className="cursor-pointer hover:shadow-md transition-shadow"
               onClick={() => navigate('/picking/brand', { state: { owner: b.owner } })}>
               <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ background: OWNER_COLOR[b.owner] }} />
-                    <span className="text-sm font-bold text-gray-700">{b.owner}</span>
-                  </div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${effBadge(b.eff)}`}>
-                    {fmtPct(b.eff)}
-                  </span>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 rounded-full" style={{ background: OWNER_COLOR[b.owner] }} />
+                  <span className="text-sm font-bold text-gray-700">{b.owner}</span>
                 </div>
                 <p className="text-2xl font-bold mb-3" style={{ color: OWNER_COLOR[b.owner] }}>
                   {isAmt ? fmtM(b.val) : fmtBox(b.val)}
                 </p>
                 <div className="flex gap-3 text-xs text-gray-400">
-                  <span>표준 {b.std.toFixed(0)}h</span>
-                  <span>/</span>
-                  <span>실적 {b.act.toFixed(0)}h</span>
+                  <span>작업시간 {b.wave.toFixed(0)}h</span>
                   <span>·</span>
                   <span>구역 {b.zones}개</span>
                 </div>
@@ -251,14 +232,9 @@ export default function CenterPage({ period, metric, granularity }: Props) {
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => setSelectedCenter(c.center)}>
             <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: CENTER_COLOR[c.center] }} />
-                  <p className="text-sm font-semibold text-gray-700">{c.center}</p>
-                </div>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${effBadge(c.eff)}`}>
-                  {fmtPct(c.eff)}
-                </span>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: CENTER_COLOR[c.center] }} />
+                <p className="text-sm font-semibold text-gray-700">{c.center}</p>
               </div>
               <p className="text-2xl font-bold" style={{ color: CENTER_COLOR[c.center] }}>
                 {isAmt ? fmtM(c.val) : fmtBox(c.val)}
@@ -269,9 +245,9 @@ export default function CenterPage({ period, metric, granularity }: Props) {
                 <span>구역 {c.zones}개</span>
               </div>
               <div className="flex gap-3 mt-1 text-xs text-gray-400">
-                <span>표준 {c.std.toFixed(0)}h</span>
-                <span>/</span>
-                <span>실적 {c.act.toFixed(0)}h</span>
+                <span>작업시간 {c.wave.toFixed(0)}h</span>
+                <span>·</span>
+                <span>시간당 {isAmt ? fmtM(c.pph) : fmtNum(Math.round(c.pph))}</span>
               </div>
               <p className="mt-3 text-[11px] text-gray-300">브랜드 상세 보기 ›</p>
             </CardContent>
@@ -319,50 +295,31 @@ export default function CenterPage({ period, metric, granularity }: Props) {
         )}
       </SectionCard>
 
-      {/* 센터별 가동률 도넛 + 1센터 브랜드 비중 추이 */}
+      {/* 센터별 시간당 생산성 + 1센터 브랜드 비중 추이 */}
       <div className="grid grid-cols-2 gap-5">
 
-        {/* 센터별 가동률 — 도넛 게이지 */}
-        <SectionCard title="센터별 가동률" subtitle="선택 기간 기준">
-          <div className="flex gap-3 justify-around py-2">
-            {[...centerKpi].sort((a, b) => b.eff - a.eff).map(c => {
-              const filled  = Math.min(c.eff, 100)
-              const rest    = Math.max(0, 100 - filled)
-              const gColor  = effColor(c.eff)
-              const gaugeData = [
-                { name: '가동', value: filled },
-                { name: '미달', value: rest },
-              ]
+        {/* 센터별 시간당 생산성 (작업시간 기준) */}
+        <SectionCard title="센터별 시간당 생산성" subtitle="선택 기간 · 작업시간 기준">
+          <div className="space-y-3 py-1">
+            {[...centerKpi].sort((a, b) => b.pph - a.pph).map(c => {
+              const maxPph = Math.max(...centerKpi.map(x => x.pph), 1)
+              const pct = Math.max(4, (c.pph / maxPph) * 100)
               return (
-                <div key={c.center} className="flex flex-col items-center gap-2">
-                  <div className="relative">
-                    <PieChart width={110} height={110}>
-                      <Pie
-                        data={gaugeData}
-                        cx={55} cy={55}
-                        innerRadius={35} outerRadius={50}
-                        startAngle={90} endAngle={-270}
-                        dataKey="value"
-                        paddingAngle={filled < 99.9 ? 3 : 0}
-                      >
-                        <Cell fill={gColor} strokeWidth={0} />
-                        <Cell fill="#f3f4f6" strokeWidth={0} />
-                      </Pie>
-                    </PieChart>
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <p className="text-sm font-bold" style={{ color: gColor }}>
-                        {c.eff.toFixed(1)}%
-                      </p>
+                <div key={c.center}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full" style={{ background: CENTER_COLOR[c.center] }} />
+                      <span className="text-sm font-semibold text-gray-700">{c.center}</span>
+                      <span className="text-[11px] text-gray-400">{c.owners.join(' · ')}</span>
                     </div>
+                    <span className="text-sm font-bold" style={{ color: CENTER_COLOR[c.center] }}>
+                      {isAmt ? fmtM(c.pph) : fmtNum(Math.round(c.pph))}/h
+                    </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full" style={{ background: CENTER_COLOR[c.center] }} />
-                    <span className="text-sm font-semibold text-gray-700">{c.center}</span>
+                  <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: CENTER_COLOR[c.center] }} />
                   </div>
-                  <p className="text-[11px] text-gray-400">{c.owners.join(' · ')}</p>
-                  <p className="text-[11px] text-gray-400">
-                    {c.std.toFixed(0)}h / {c.act.toFixed(0)}h
-                  </p>
+                  <p className="text-[11px] text-gray-400 mt-1">작업시간 {c.wave.toFixed(0)}h</p>
                 </div>
               )
             })}

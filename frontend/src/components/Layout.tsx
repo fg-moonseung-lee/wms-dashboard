@@ -6,6 +6,7 @@ const PAGE_TITLE_MAP: { prefix: string; title: string }[] = [
   { prefix: '/incoming',  title: '입고생산성' },
   { prefix: '/cbm',       title: 'CBM관리' },
   { prefix: '/equipment', title: '장비관리' },
+  { prefix: '/trigger',   title: '생산성 집계 수동 실행' },
 ]
 
 const IcoMenu = () => (

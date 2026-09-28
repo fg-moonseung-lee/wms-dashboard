@@ -7,18 +7,25 @@ zones_<date>.json(우리 계산값) vs 종합실적_최종(담당자 기준) 비
 (나중에 한번에 원인 찾아 수정하기 위한 기록. 같은 날짜 재실행 시 해당 날짜분 갱신)
 
 분류:
-  DPS_self_ref        : DPS 표준/실적 (외부 API값, self-reference)
-  group_order_nuance  : 비-DPS 표준 잔차 (그룹내 방문순서 차이, 박스는 일치)
   price_version_diff  : 금액 차이 (공장도가 단가 버전차, 박스 일치)
   box_mismatch        : 박스수 차이 (★진짜 조사 필요)
-  act_diff            : 실적시간 차이 (그 외)
-  investigate         : 위에 안 맞는 표준 차이 (★조사 필요)
+  investigate         : 위에 안 맞는 차이 (★조사 필요)
+
+(표준시간/실적시간/가동률 비교는 2026-09-28 가동률 개념 제거로 삭제 — 더 이상
+계산하지 않는 값이라 비교 대상이 없음. box/amount만 유지.)
 
 사용: python scripts/log_discrepancy.py --date 2026-06-08
 """
-import argparse, csv, json
+import argparse, csv, json, sys
 from datetime import datetime, date as _date
 from pathlib import Path
+
+# Windows 콘솔 기본 코드페이지(cp949)로 실행 시(파이프로 리다이렉트되는 서브프로세스
+# 체인 등) 특수문자 출력에서 UnicodeEncodeError로 죽는 문제 방지 (wms_rpa.py와 동일 처리)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 import openpyxl
 
 BASE = Path(__file__).resolve().parent.parent
@@ -41,20 +48,14 @@ def _expected(date_str):
     for z,r in ZONE_STD_ROW_FINAL.items():
         std = ws.cell(r,col).value
         if isinstance(std,(int,float)) and std>0:
-            out[z] = {"std":float(std), "amount":float(ws.cell(r-3,col).value or 0),
-                      "box":float(ws.cell(r-1,col).value or 0), "act":float(ws.cell(r+11,col).value or 0)}
+            out[z] = {"amount":float(ws.cell(r-3,col).value or 0),
+                      "box":float(ws.cell(r-1,col).value or 0)}
     wb.close(); return out
 
 
 def _category(metric, zone, box_ok):
     if metric == "box":      return "box_mismatch"
     if metric == "amount":   return "price_version_diff" if box_ok else "investigate"
-    if metric == "std":
-        if zone == "DPS":    return "DPS_self_ref"
-        return "group_order_nuance" if box_ok else "investigate"
-    if metric == "act":
-        if zone == "DPS":    return "DPS_self_ref"
-        return "act_diff"
     return "investigate"
 
 
@@ -80,8 +81,6 @@ def main():
         owner = o.get("owner","")
         box_ok = abs((o.get("pick_box") or 0) - e["box"]) <= max(1, e["box"]*EPS/100)
         checks = [
-            ("std",    o.get("std_time_hr") or 0, e["std"]),
-            ("act",    o.get("act_time_hr") or 0, e["act"]),
             ("box",    o.get("pick_box") or 0,    e["box"]),
             ("amount", o.get("pick_amount") or 0, e["amount"]),
         ]

@@ -33,10 +33,17 @@ Usage:
 import argparse
 import json
 import re
+import sys
 from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
+
+# Windows 콘솔 기본 코드페이지(cp949)로 실행 시(파이프로 리다이렉트되는 서브프로세스
+# 체인 등) 특수문자 출력에서 UnicodeEncodeError로 죽는 문제 방지 (wms_rpa.py와 동일 처리)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 BASE_DIR   = Path(__file__).resolve().parent.parent
 RAW_BASE   = BASE_DIR / "data" / "raw" / "2026_입고"   # 하위 월 폴더(07 등)에 raw
@@ -111,12 +118,29 @@ def norm_worker(name: str) -> str:
     return s
 
 
+def _empty_raw_frame() -> pd.DataFrame:
+    """입고/이동 raw 파일이 그 날 아예 없을 때(명절 등)의 빈 프레임 — build_daily()의
+    concat 대상 스키마와 동일하게 맞춤."""
+    return pd.DataFrame({
+        "work_dt":  pd.Series([], dtype="datetime64[ns]"),
+        "owner":    pd.Series([], dtype="object"),
+        "worker":   pd.Series([], dtype="object"),
+        "item":     pd.Series([], dtype="object"),
+        "qty":      pd.Series([], dtype="float64"),
+        "from_loc": pd.Series([], dtype="object"),
+        "to_loc":   pd.Series([], dtype="object"),
+        "raw_type": pd.Series([], dtype="object"),
+        "src":      pd.Series([], dtype="object"),
+    })
+
+
 # ── raw 로드 ──────────────────────────────────────────────────────────
 def load_inbound(brand: str, target: date) -> pd.DataFrame:
     mmdd = target.strftime("%m%d")
     path = raw_dir(target) / f"입고_{brand}_{mmdd}.xlsx"
     if not path.exists():
-        raise FileNotFoundError(path)
+        print(f"  입고 raw: 파일 없음 ({path.name}) — 0행 처리")
+        return _empty_raw_frame()
     df = pd.read_excel(path)
     df.columns = df.columns.str.strip()
 
@@ -145,7 +169,8 @@ def load_moves(brand: str, target: date) -> pd.DataFrame:
     mmdd = target.strftime("%m%d")
     path = raw_dir(target) / f"이동_{brand}_{mmdd}.xlsx"
     if not path.exists():
-        raise FileNotFoundError(path)
+        print(f"  이동 raw: 파일 없음 ({path.name}) — 0행 처리")
+        return _empty_raw_frame()
     df = pd.read_excel(path)
     df.columns = df.columns.str.strip()
 

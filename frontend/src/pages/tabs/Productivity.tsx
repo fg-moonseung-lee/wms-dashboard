@@ -1,6 +1,6 @@
 import {
   LineChart, Line, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, Legend,
-  ResponsiveContainer, CartesianGrid, ReferenceLine,
+  ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { useAllZoneData } from '../../hooks/useAllZoneData'
 import { periodToRange, dateToBucket, bucketLabel } from '../../lib/weekUtils'
@@ -14,7 +14,6 @@ import { ChartTooltip } from '@/components/ChartTooltip'
 
 interface Props { period: Period; metric: Metric; granularity: Granularity }
 
-const fmtPct = (v: number) => `${v.toFixed(1)}%`
 const fmtM   = (v: number) => `${v.toFixed(1)}백만`
 const fmtBox = (v: number) => `${v.toLocaleString('ko-KR')}박스`
 const fmtNum = (v: number) => v.toLocaleString('ko-KR')
@@ -39,61 +38,63 @@ function SectionCard({ title, subtitle, children }: {
   )
 }
 
-/* ── 브랜드별 가동률 추이 (전체 데이터, granularity) ── */
-function weeklyEffByOwner(rows: ZoneDaily[], gran: Granularity) {
-  const map = new Map<string, Map<string, { std: number; act: number }>>()
+/* ── 브랜드별 시간당 생산성 추이 (전체 데이터, granularity) ── */
+function weeklyPphByOwner(rows: ZoneDaily[], metric: Metric, gran: Granularity) {
+  const scale = metric === 'amount' ? 1_000_000 : 1
+  const map = new Map<string, Map<string, { val: number; wave: number }>>()
   for (const r of rows) {
     const bucket = dateToBucket(r.work_date, gran)
     if (!map.has(bucket)) map.set(bucket, new Map())
     const bm = map.get(bucket)!
-    if (!bm.has(r.owner)) bm.set(r.owner, { std: 0, act: 0 })
+    if (!bm.has(r.owner)) bm.set(r.owner, { val: 0, wave: 0 })
     const e = bm.get(r.owner)!
-    e.std += r.std_time_hr
-    e.act += r.act_time_hr
+    e.val  += metricVal(r, metric) / scale
+    e.wave += r.wave_time_hr ?? 0
   }
   return [...map.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([bucket, bm]) => ({
       label: bucketLabel(bucket, gran),
       ...Object.fromEntries(OWNERS.map(o => {
-        const e = bm.get(o) ?? { std: 0, act: 0 }
-        return [o, e.act > 0 ? +((e.std / e.act) * 100).toFixed(1) : null]
+        const e = bm.get(o) ?? { val: 0, wave: 0 }
+        return [o, e.wave > 0 ? +(e.val / e.wave).toFixed(3) : null]
       })),
     }))
 }
 
-/* ── 구역별 가동률 집계 ── */
-interface ZoneEffRow {
-  zone: string; owner: string; eff: number; std: number; act: number
+/* ── 구역별 시간당 생산성 집계 (작업시간 기준) ── */
+interface ZonePphRow {
+  zone: string; owner: string; pph: number; val: number; wave: number
 }
-function zoneEfficiency(rows: ZoneDaily[]): ZoneEffRow[] {
-  const map = new Map<string, ZoneEffRow>()
+function zonePph(rows: ZoneDaily[], metric: Metric): ZonePphRow[] {
+  const scale = metric === 'amount' ? 1_000_000 : 1
+  const map = new Map<string, ZonePphRow>()
   for (const r of rows) {
     const key = `${r.owner}|${r.zone}`
-    if (!map.has(key)) map.set(key, { zone: r.zone, owner: r.owner, eff: 0, std: 0, act: 0 })
+    if (!map.has(key)) map.set(key, { zone: r.zone, owner: r.owner, pph: 0, val: 0, wave: 0 })
     const e = map.get(key)!
-    e.std += r.std_time_hr
-    e.act += r.act_time_hr
+    e.val  += metricVal(r, metric) / scale
+    e.wave += r.wave_time_hr ?? 0
   }
   return [...map.values()]
-    .map(e => ({ ...e, eff: e.act > 0 ? +((e.std / e.act) * 100).toFixed(1) : 0 }))
-    .sort((a, b) => b.eff - a.eff)
+    .map(e => ({ ...e, pph: e.wave > 0 ? e.val / e.wave : 0 }))
+    .sort((a, b) => b.pph - a.pph)
 }
 
-/* ── 구역별 실적기준 vs WMS기준 생산성 비교 ── */
+/* ── 구역별 작업시간 기준 vs WMS기준 생산성 비교 ── */
 interface ZoneWmsRow {
   zone: string; owner: string
-  act: number; wms: number; val: number
-  pphAct: number; pphWms: number
+  wave: number; wms: number; val: number
+  pphWave: number; pphWms: number
 }
 function zoneWmsComparison(rows: ZoneDaily[], metric: Metric): ZoneWmsRow[] {
   const scale = metric === 'amount' ? 1_000_000 : 1
-  const map = new Map<string, { zone: string; owner: string; act: number; wms: number; val: number }>()
+  const map = new Map<string, { zone: string; owner: string; wave: number; wms: number; val: number }>()
   for (const r of rows) {
     const key = `${r.owner}|${r.zone}`
-    if (!map.has(key)) map.set(key, { zone: r.zone, owner: r.owner, act: 0, wms: 0, val: 0 })
+    if (!map.has(key)) map.set(key, { zone: r.zone, owner: r.owner, wave: 0, wms: 0, val: 0 })
     const e = map.get(key)!
-    e.act += r.act_time_hr
+    e.wave += r.wave_time_hr ?? 0
     if (r.wms_time_hr != null && r.wms_time_hr > 0) e.wms += r.wms_time_hr
     e.val += metricVal(r, metric) / scale
   }
@@ -101,32 +102,32 @@ function zoneWmsComparison(rows: ZoneDaily[], metric: Metric): ZoneWmsRow[] {
     .filter(e => e.wms > 0)
     .map(e => ({
       ...e,
-      pphAct: e.act > 0 ? e.val / e.act : 0,
-      pphWms: e.wms > 0 ? e.val / e.wms : 0,
+      pphWave: e.wave > 0 ? e.val / e.wave : 0,
+      pphWms:  e.wms > 0 ? e.val / e.wms : 0,
     }))
-    .sort((a, b) => b.pphAct - a.pphAct)
+    .sort((a, b) => b.pphWave - a.pphWave)
 }
 
 /* ── 브랜드별 시간당 피킹 (전체 데이터, granularity) — 그룹 바용 ── */
 function pickPerHourByBrand(rows: ZoneDaily[], metric: Metric, gran: Granularity) {
   const scale = metric === 'amount' ? 1_000_000 : 1
-  const map = new Map<string, Map<string, { val: number; act: number }>>()
+  const map = new Map<string, Map<string, { val: number; wave: number }>>()
   for (const r of rows) {
     const bucket = dateToBucket(r.work_date, gran)
     if (!map.has(bucket)) map.set(bucket, new Map())
     const bm = map.get(bucket)!
-    if (!bm.has(r.owner)) bm.set(r.owner, { val: 0, act: 0 })
+    if (!bm.has(r.owner)) bm.set(r.owner, { val: 0, wave: 0 })
     const e = bm.get(r.owner)!
-    e.val += metricVal(r, metric) / scale
-    e.act += r.act_time_hr
+    e.val  += metricVal(r, metric) / scale
+    e.wave += r.wave_time_hr ?? 0
   }
   return [...map.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([bucket, bm]) => ({
       label: bucketLabel(bucket, gran),
       ...Object.fromEntries(OWNERS.map(o => {
-        const e = bm.get(o) ?? { val: 0, act: 0 }
-        return [o, e.act > 0 ? +(e.val / e.act).toFixed(3) : null]
+        const e = bm.get(o) ?? { val: 0, wave: 0 }
+        return [o, e.wave > 0 ? +(e.val / e.wave).toFixed(3) : null]
       })),
     }))
 }
@@ -153,27 +154,25 @@ export default function Productivity({ period, metric, granularity }: Props) {
   const granLabel = granularity === 'day' ? '일별' : granularity === 'week' ? '주간' : '월간'
 
   /* 전체 KPI — 선택 기간 기준 */
-  let totalStd = 0, totalAct = 0, totalVal = 0, totalWms = 0, totalValWms = 0
+  let totalWave = 0, totalVal = 0, totalWms = 0, totalValWms = 0
   const scale = isAmt ? 1_000_000 : 1
   for (const r of pRows) {
-    totalStd += r.std_time_hr
-    totalAct += r.act_time_hr
+    totalWave += r.wave_time_hr ?? 0
     totalVal += metricVal(r, metric) / scale
     if (r.wms_time_hr != null && r.wms_time_hr > 0) {
       totalWms += r.wms_time_hr
       totalValWms += metricVal(r, metric) / scale
     }
   }
-  const overallEff   = totalAct > 0 ? (totalStd / totalAct) * 100 : 0
-  const pickPerHr    = totalAct > 0 ? totalVal / totalAct : 0
+  const pickPerHr    = totalWave > 0 ? totalVal / totalWave : 0
   const pickPerHrWms = totalWms > 0 ? totalValWms / totalWms : null
 
   /* 차트 데이터 — 일별은 선택 기간, 주간/월간은 전체 기반 */
   const chartRows = granularity === 'day' ? pRows : rows
-  const effTrend  = weeklyEffByOwner(chartRows, granularity)
-  const zoneEff   = zoneEfficiency(pRows)       // 구역별 가동률은 기간 기준 유지
-  const pphTrend  = pickPerHourByBrand(chartRows, metric, granularity)
-  const zoneWms   = zoneWmsComparison(pRows, metric)
+  const pphTrendByOwner = weeklyPphByOwner(chartRows, metric, granularity)
+  const zonePphRows     = zonePph(pRows, metric)   // 구역별 시간당생산성은 기간 기준 유지
+  const pphTrend        = pickPerHourByBrand(chartRows, metric, granularity)
+  const zoneWms         = zoneWmsComparison(pRows, metric)
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -182,11 +181,11 @@ export default function Productivity({ period, metric, granularity }: Props) {
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-5">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">전체 가동률</p>
-            <p className="text-2xl font-bold" style={{
-              color: overallEff >= 100 ? '#10b981' : overallEff >= 80 ? '#f97316' : '#ef4444'
-            }}>{fmtPct(overallEff)}</p>
-            <p className="text-xs text-muted-foreground mt-1">목표 100%</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">총 작업시간</p>
+            <p className="text-2xl font-bold text-sky-600">{totalWave.toFixed(0)}h</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              WMS {totalWms > 0 ? totalWms.toFixed(0) + 'h' : '-'}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -198,7 +197,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
               {isAmt ? fmtM(pickPerHr) : fmtBox(Math.round(pickPerHr))}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              실적기준 · WMS기준&nbsp;
+              작업시간 기준 · WMS기준&nbsp;
               <span className="font-medium text-foreground">
                 {pickPerHrWms != null ? (isAmt ? fmtM(pickPerHrWms) : fmtBox(Math.round(pickPerHrWms))) : '-'}
               </span>
@@ -207,28 +206,25 @@ export default function Productivity({ period, metric, granularity }: Props) {
         </Card>
         <Card>
           <CardContent className="p-5">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">표준/실적/WMS 시간</p>
-            <p className="text-2xl font-bold">{totalStd.toFixed(0)}h</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              실적 {totalAct.toFixed(0)}h · WMS {totalWms > 0 ? totalWms.toFixed(0) + 'h' : '-'}
-            </p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">총 {isAmt ? '피킹금액' : '피킹박스수'}</p>
+            <p className="text-2xl font-bold">{isAmt ? fmtM(totalVal) : fmtBox(Math.round(totalVal))}</p>
+            <p className="text-xs text-muted-foreground mt-1">선택 기간 합계</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* 브랜드별 가동률 추이 — 전체 히스토리 */}
-      <SectionCard title={`브랜드별 가동률 ${granLabel} 추이 (%)`} subtitle="표준시간/실적시간">
-        {effTrend.length === 0 ? (
+      {/* 브랜드별 시간당 생산성 추이 — 전체 히스토리 */}
+      <SectionCard title={`브랜드별 시간당 생산성 ${granLabel} 추이 (${unit}/h)`} subtitle="작업시간 기준">
+        {pphTrendByOwner.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-gray-300 text-xs">데이터 없음</div>
         ) : (
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={effTrend} margin={{ top: 4, right: 24, left: 0, bottom: 4 }}>
+            <LineChart data={pphTrendByOwner} margin={{ top: 4, right: 24, left: 0, bottom: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} />
               <YAxis
                 tick={{ fontSize: 11, fill: '#6b7280' }}
-                domain={[50, 120]}
-                tickFormatter={v => `${v}%`}
+                tickFormatter={v => isAmt ? `${v}백만` : fmtNum(v)}
               />
               <Tooltip
                 content={(props: any) => (
@@ -236,12 +232,11 @@ export default function Productivity({ period, metric, granularity }: Props) {
                     active={props.active}
                     payload={props.payload}
                     label={props.label}
-                    formatter={(v) => `${v}%`}
+                    formatter={(v) => isAmt ? `${fmtM(v)}/h` : `${fmtBox(Math.round(v))}/h`}
                   />
                 )}
               />
               <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-              <ReferenceLine y={100} stroke="#6b7280" strokeDasharray="4 2" strokeWidth={1} label={{ value: '100%', position: 'right', fontSize: 10, fill: '#6b7280' }} />
               {OWNERS.map(o => (
                 <Line
                   key={o} dataKey={o}
@@ -255,25 +250,25 @@ export default function Productivity({ period, metric, granularity }: Props) {
         )}
       </SectionCard>
 
-      {/* 구역별 가동률 + 브랜드별 시간당 나란히 */}
+      {/* 구역별 시간당 생산성 + 브랜드별 시간당 나란히 */}
       <div className="grid grid-cols-2 gap-5">
 
-        {/* 구역별 가동률 수평 막대 — 선택 기간 기준 */}
-        <SectionCard title="구역별 가동률 비교 (%)" subtitle="가동률 순">
-          {zoneEff.length === 0 ? (
+        {/* 구역별 시간당 생산성 수평 막대 — 선택 기간 기준 */}
+        <SectionCard title={`구역별 시간당 생산성 비교 (${unit}/h)`} subtitle="작업시간 기준 · 높은 순">
+          {zonePphRows.length === 0 ? (
             <div className="flex items-center justify-center h-40 text-gray-300 text-xs">데이터 없음</div>
           ) : (
-            <ResponsiveContainer width="100%" height={Math.max(200, zoneEff.length * 28)}>
+            <ResponsiveContainer width="100%" height={Math.max(200, zonePphRows.length * 28)}>
               <BarChart
-                data={zoneEff}
+                data={zonePphRows}
                 layout="vertical"
-                margin={{ top: 4, right: 40, left: 24, bottom: 4 }}
+                margin={{ top: 4, right: 48, left: 24, bottom: 4 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
                 <XAxis
-                  type="number" domain={[0, 120]}
+                  type="number"
                   tick={{ fontSize: 10, fill: '#6b7280' }}
-                  tickFormatter={v => `${v}%`}
+                  tickFormatter={v => isAmt ? `${v}백만` : fmtNum(v)}
                 />
                 <YAxis
                   type="category" dataKey="zone"
@@ -281,17 +276,16 @@ export default function Productivity({ period, metric, granularity }: Props) {
                   width={36}
                 />
                 <Tooltip
-                  formatter={(v: number, _: string, props) => {
-                    const item = props.payload as ZoneEffRow
-                    return [`${v}%`, `${item?.owner ?? ''} · ${item?.zone ?? ''}`]
-                  }}
+                  formatter={((v: number, _: string, props: any) => {
+                    const item = props.payload as ZonePphRow
+                    return [isAmt ? `${fmtM(v)}/h` : `${fmtBox(Math.round(v))}/h`, `${item?.owner ?? ''} · ${item?.zone ?? ''}`]
+                  }) as any}
                   contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
                 />
-                <ReferenceLine x={100} stroke="#6b7280" strokeDasharray="4 2" strokeWidth={1} />
-                <Bar dataKey="eff" radius={[0, 4, 4, 0]} maxBarSize={20}
-                  label={{ position: 'right', fontSize: 10, fill: '#6b7280', formatter: (v: number) => `${v}%` }}
+                <Bar dataKey="pph" radius={[0, 4, 4, 0]} maxBarSize={20}
+                  label={{ position: 'right', fontSize: 10, fill: '#6b7280', formatter: ((v: number) => isAmt ? v.toFixed(1) : fmtNum(Math.round(v))) as any }}
                 >
-                  {zoneEff.map(z => (
+                  {zonePphRows.map(z => (
                     <Cell key={z.zone} fill={OWNER_COLOR[z.owner]} />
                   ))}
                 </Bar>
@@ -303,7 +297,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
         {/* 브랜드별 시간당 피킹 — 그룹 바, 전체 히스토리 */}
         <SectionCard
           title={`브랜드별 시간당 피킹 ${granLabel} 추이 (${unit}/h)`}
-          subtitle="실적시간 기준"
+          subtitle="작업시간 기준"
         >
           {pphTrend.length === 0 ? (
             <div className="flex items-center justify-center h-40 text-gray-300 text-xs">데이터 없음</div>
@@ -340,23 +334,23 @@ export default function Productivity({ period, metric, granularity }: Props) {
       {zoneWms.length > 0 && (
         <SectionCard
           title={`구역별 생산성 비교 (${unit}/h)`}
-          subtitle="실적시간 기준 vs WMS 근무시간 기준"
+          subtitle="작업시간 기준 vs WMS 근무시간 기준"
         >
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border text-muted-foreground">
                   <th className="text-left pb-2 pr-3 font-medium">구역</th>
-                  <th className="text-right pb-2 pr-3 font-medium">실적시간</th>
+                  <th className="text-right pb-2 pr-3 font-medium">작업시간</th>
                   <th className="text-right pb-2 pr-3 font-medium">WMS시간</th>
-                  <th className="text-right pb-2 pr-3 font-medium">활용률</th>
-                  <th className="text-right pb-2 pr-3 font-medium">실적기준</th>
+                  <th className="text-right pb-2 pr-3 font-medium">몰입률</th>
+                  <th className="text-right pb-2 pr-3 font-medium">작업시간기준</th>
                   <th className="text-right pb-2 font-medium">WMS기준</th>
                 </tr>
               </thead>
               <tbody>
                 {zoneWms.map(z => {
-                  const ratio = z.wms > 0 ? (z.act / z.wms) * 100 : null
+                  const ratio = z.wms > 0 ? (z.wave / z.wms) * 100 : null
                   const ratioColor = ratio == null ? '' : ratio >= 80 ? '#10b981' : ratio >= 60 ? '#f97316' : '#ef4444'
                   const fmtVal = (v: number) => isAmt ? fmtM(v) : fmtBox(Math.round(v))
                   return (
@@ -365,13 +359,13 @@ export default function Productivity({ period, metric, granularity }: Props) {
                         <span className="font-medium">{z.zone}</span>
                         <span className="text-muted-foreground ml-1.5 text-[10px]">{z.owner}</span>
                       </td>
-                      <td className="py-1.5 pr-3 text-right tabular-nums">{z.act.toFixed(0)}h</td>
+                      <td className="py-1.5 pr-3 text-right tabular-nums">{z.wave.toFixed(0)}h</td>
                       <td className="py-1.5 pr-3 text-right tabular-nums">{z.wms.toFixed(0)}h</td>
                       <td className="py-1.5 pr-3 text-right tabular-nums font-medium" style={{ color: ratioColor }}>
                         {ratio != null ? ratio.toFixed(1) + '%' : '-'}
                       </td>
                       <td className="py-1.5 pr-3 text-right tabular-nums font-semibold text-[#FF6B35]">
-                        {fmtVal(z.pphAct)}
+                        {fmtVal(z.pphWave)}
                       </td>
                       <td className="py-1.5 text-right tabular-nums text-muted-foreground">
                         {fmtVal(z.pphWms)}
