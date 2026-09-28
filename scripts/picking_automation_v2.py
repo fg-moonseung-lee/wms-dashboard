@@ -475,8 +475,14 @@ def _calc_wave_metrics(df: pd.DataFrame) -> dict:
     (기존에 DPS 전용으로만 쓰던 zone-wide 타임스탬프 max-min 방식을 모든 구역/작업자로
     일반화한 것).
 
-    - wave_time_hr: (G,H) wave 그룹별 max(K)-min(K) 합산 — 실제 피킹에 쓴 시간
-      (wave 내 픽이 1건뿐이면 span을 잴 수 없어 0으로 처리 — 알려진 과소추정 케이스).
+    - wave_time_hr: (G,H) wave 그룹별 max(K)-min(K) 합산 — 실제 피킹에 쓴 시간.
+      wave 안에 pick이 1건(solo-pick)뿐이면 자체 span을 잴 수 없어, 같은 (zone,worker)의
+      멀티픽 wave 평균 초/건을 그 1건에 적용해 추정한다(2026-09-28 수정 — 이전엔 0으로
+      처리해 solo-pick 비중이 높은 작업자의 작업시간이 심각하게 과소집계됐음, 예:
+      2026-09-27 M-N [야간]전종욱 박스 332개인데 wave_time_hr=0.0002h). 그 worker가 그
+      zone에서 멀티픽 wave가 하나도 없으면 zone 전체 평균 초/건으로 폴백, 그마저 없으면
+      (zone 전체가 이 날 전부 solo-pick) 기존처럼 0 처리 — 추정 근거가 전혀 없는 극히
+      드문 경우라 억지로 값을 만들지 않고 알려진 한계로 남긴다.
     - wms_time_hr:  그 worker의 하루 전체 max(K)-min(K) — 첫 픽~마지막 픽 전체 span
       (wave 경계 무시, 휴게시간 등 포함).
 
@@ -485,16 +491,42 @@ def _calc_wave_metrics(df: pd.DataFrame) -> dict:
     out: dict = {}
     if df is None or df.empty or "K" not in df.columns:
         return out
+
+    zone_multi_span:  dict = {}   # zone → 멀티픽 wave span 합 (전체 작업자, 폴백용)
+    zone_multi_picks: dict = {}   # zone → 멀티픽 wave pick 수 합
+    records = []                  # (zone, worker, wms_hr, wave_hr, solo_count, multi_span, multi_picks)
+
     for (zone, worker), g in df.groupby(["B", "J"], dropna=False):
         ks = g["K"].dropna()
         if len(ks) == 0:
             continue
         wms_hr = (ks.max() - ks.min()).total_seconds() / 3600
         wave_hr = 0.0
+        solo_count  = 0
+        multi_span  = 0.0
+        multi_picks = 0
         for _, wg in g.groupby(["G", "H"], dropna=False):
             wks = wg["K"].dropna()
             if len(wks) >= 2:
-                wave_hr += (wks.max() - wks.min()).total_seconds() / 3600
+                span = (wks.max() - wks.min()).total_seconds() / 3600
+                wave_hr     += span
+                multi_span  += span
+                multi_picks += len(wks)
+            else:
+                solo_count += 1
+        zone_multi_span[zone]  = zone_multi_span.get(zone, 0.0) + multi_span
+        zone_multi_picks[zone] = zone_multi_picks.get(zone, 0) + multi_picks
+        records.append((zone, worker, wms_hr, wave_hr, solo_count, multi_span, multi_picks))
+
+    for zone, worker, wms_hr, wave_hr, solo_count, multi_span, multi_picks in records:
+        if solo_count > 0:
+            if multi_picks > 0:
+                rate = multi_span / multi_picks
+            elif zone_multi_picks.get(zone, 0) > 0:
+                rate = zone_multi_span[zone] / zone_multi_picks[zone]
+            else:
+                rate = 0.0
+            wave_hr += rate * solo_count
         out[(zone, worker)] = {
             "wave_time_hr": round(wave_hr, 6),
             "wms_time_hr":  round(wms_hr, 6),

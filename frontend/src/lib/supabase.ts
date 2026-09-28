@@ -112,6 +112,40 @@ export interface InboundWorkerDaily extends InboundMetrics {
   worker_display: string       // 태그 제거
 }
 
+/* ── 근태 마감 (attendance_daily) ── */
+// 도급사/협력사가 익일 수동 확정하는 실제 출퇴근 기준 근무시간. worker_name은
+// [주간]/[야간] 태그가 제거된 표시 이름 — 한 사람이 요일마다 주간/야간을 오갈 수
+// 있어 태그 포함 원본명을 키로 쓰면 근태가 쪼개짐.
+export interface AttendanceDaily {
+  id:          number
+  work_date:   string
+  worker_name: string
+  hours:       number
+  updated_at:  string
+}
+
+const _TAG_RE = /^\[(주간|야간)\]/
+export function stripTag(name: string): string {
+  return name.replace(_TAG_RE, '').trim()
+}
+
+// zone → 도급사 (피킹). DPS는 일룸 zone이지만 반품/AS/DPC피킹 전담 도급사가 따로 있음.
+export const CONTRACTOR_ZONE: Record<string, string> = {
+  'H-I': 'IPC', 'C-D': 'IPC', 'A-P': 'IPC',
+  'DPS': '에프스토리',
+  'E-F': '바로서비스', 'J-K': '바로서비스', 'L': '바로서비스', 'B': '바로서비스', 'L/S': '바로서비스',
+  'M-N': '한국사람들', 'S': '한국사람들',
+  'W': '하나물류', 'R': '하나물류',
+}
+// brand → 도급사 (입고, zone 구분이 없어 브랜드 단위로만 매핑)
+export const CONTRACTOR_OWNER: Record<string, string> = {
+  '일룸':   'IPC',
+  '퍼시스': '바로서비스',
+  '데스커': '한국사람들',
+  '3PL':   '하나물류',
+}
+// 상하차(하나물류)/수출(제이앤테크)은 아직 별도 데이터 소스가 없어 매핑 보류 — 추후 확장
+
 /* ── 입고유형 (정산용 세분화 6유형) ── */
 export const INBOUND_TYPES = [
   { key: 'normal',  label: '정상입고',        color: '#3B82F6' },

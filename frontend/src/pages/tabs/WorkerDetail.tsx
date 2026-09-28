@@ -5,6 +5,7 @@ import {
 import { useLocation } from 'react-router-dom'
 import { useAllZoneData } from '../../hooks/useAllZoneData'
 import { useWorkerStats } from '../../hooks/useWorkerStats'
+import { useWorkerAttendance } from '../../hooks/useAttendance'
 import { useHierarchy } from '../../hooks/useHierarchy'
 import { OWNER_COLOR, OWNERS } from '../../lib/supabase'
 import { periodToRange } from '../../lib/weekUtils'
@@ -179,8 +180,8 @@ function WorkerTable({ workers, metric, onSelect }: {
 }
 
 /* ── Depth 3: 작업자 일별 상세 ──────────────────────── */
-function WorkerDailyDetail({ daily, metric }: {
-  workerName: string; daily: DailyPoint[]; metric: Metric
+function WorkerDailyDetail({ daily, metric, attendance }: {
+  workerName: string; daily: DailyPoint[]; metric: Metric; attendance: Map<string, number>
 }) {
   const isAmt = metric === 'amount'
   if (daily.length === 0) return (
@@ -197,12 +198,23 @@ function WorkerDailyDetail({ daily, metric }: {
   }))
 
   const totalWave = daily.reduce((s, d) => s + d.wave_time_hr, 0)
+  const totalAtt  = daily.reduce((s, d) => s + (attendance.get(d.work_date) ?? 0), 0)
+  const attCount  = daily.filter(d => attendance.has(d.work_date)).length
 
   return (
     <div className="space-y-4">
       {/* 요약 */}
       <div className="flex gap-6 text-xs">
         <div><span className="text-gray-400">작업시간 합계 </span><span className="font-bold text-gray-700">{totalWave.toFixed(1)}h</span></div>
+        <div>
+          <span className="text-gray-400">근무시간 합계 </span>
+          <span className="font-bold text-gray-700">
+            {attCount > 0 ? `${totalAtt.toFixed(1)}h` : '미입력'}
+          </span>
+          {attCount > 0 && attCount < daily.length && (
+            <span className="text-gray-300"> ({attCount}/{daily.length}일)</span>
+          )}
+        </div>
         <div><span className="text-gray-400">가동일수 </span><span className="font-bold text-gray-700">{daily.length}일</span></div>
         <div>
           <span className="text-gray-400">{isAmt ? '총 금액 ' : '총 박스 '}</span>
@@ -248,19 +260,24 @@ function WorkerDailyDetail({ daily, metric }: {
               <th className="text-right py-1.5 px-2 text-gray-400 font-medium">{isAmt ? '금액(백만)' : '박스수'}</th>
               <th className="text-right py-1.5 px-2 text-gray-400 font-medium">작업시간</th>
               <th className="text-right py-1.5 px-2 text-gray-400 font-medium">WMS시간</th>
+              <th className="text-right py-1.5 px-2 text-gray-400 font-medium">근무시간</th>
             </tr>
           </thead>
           <tbody>
-            {daily.map((d, i) => (
-              <tr key={d.work_date} className={i % 2 === 0 ? 'bg-gray-50/40' : ''}>
-                <td className="py-1.5 px-2 text-gray-600">{d.work_date}</td>
-                <td className="py-1.5 px-2 text-right text-gray-700">
-                  {isAmt ? fmtM(d.pick_amount / 1_000_000) : fmtNum(d.pick_box)}
-                </td>
-                <td className="py-1.5 px-2 text-right text-gray-500">{d.wave_time_hr.toFixed(1)}h</td>
-                <td className="py-1.5 px-2 text-right text-gray-500">{d.wms_time_hr.toFixed(1)}h</td>
-              </tr>
-            ))}
+            {daily.map((d, i) => {
+              const att = attendance.get(d.work_date)
+              return (
+                <tr key={d.work_date} className={i % 2 === 0 ? 'bg-gray-50/40' : ''}>
+                  <td className="py-1.5 px-2 text-gray-600">{d.work_date}</td>
+                  <td className="py-1.5 px-2 text-right text-gray-700">
+                    {isAmt ? fmtM(d.pick_amount / 1_000_000) : fmtNum(d.pick_box)}
+                  </td>
+                  <td className="py-1.5 px-2 text-right text-gray-500">{d.wave_time_hr.toFixed(1)}h</td>
+                  <td className="py-1.5 px-2 text-right text-gray-500">{d.wms_time_hr.toFixed(1)}h</td>
+                  <td className="py-1.5 px-2 text-right text-gray-500">{att != null ? `${att.toFixed(1)}h` : '미입력'}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -287,6 +304,7 @@ export default function WorkerDetail({ period, metric }: Props) {
     zone:   filter.zone,
     worker: filter.worker,
   })
+  const attendance = useWorkerAttendance(filter.worker, dailyPoints.map(d => d.work_date))
 
   const { start, end } = periodToRange(period)
 
@@ -359,6 +377,7 @@ export default function WorkerDetail({ period, metric }: Props) {
               workerName={filter.worker}
               daily={dailyPoints}
               metric={metric}
+              attendance={attendance}
             />
           </CardContent>
         </Card>
