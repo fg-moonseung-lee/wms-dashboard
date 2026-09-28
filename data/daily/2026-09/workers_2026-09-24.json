@@ -1,0 +1,98 @@
+[
+  {
+    "work_date": "2026-09-24",
+    "center": "양지1센터",
+    "owner": "일룸",
+    "zone": "H-I",
+    "worker_name": "[야간]윤길제",
+    "shift": "야간",
+    "pick_amount": 24730820.0,
+    "pick_box": 209,
+    "wave_time_hr": 3.253843,
+    "wms_time_hr": 8.373765
+  },
+  {
+    "work_date": "2026-09-24",
+    "center": "양지1센터",
+    "owner": "일룸",
+    "zone": "C-D",
+    "worker_name": "[야간]전상운",
+    "shift": "야간",
+    "pick_amount": 13911900.0,
+    "pick_box": 258,
+    "wave_time_hr": 5.209445,
+    "wms_time_hr": 8.314033
+  },
+  {
+    "work_date": "2026-09-24",
+    "center": "양지1센터",
+    "owner": "일룸",
+    "zone": "A-P",
+    "worker_name": "[야간]윤길제",
+    "shift": "야간",
+    "pick_amount": 17600400.0,
+    "pick_box": 45,
+    "wave_time_hr": 0.199227,
+    "wms_time_hr": 8.035092
+  },
+  {
+    "work_date": "2026-09-24",
+    "center": "양지2센터",
+    "owner": "데스커",
+    "zone": "M-N",
+    "worker_name": "[주간]강남별",
+    "shift": "주간",
+    "pick_amount": 9615200.0,
+    "pick_box": 195,
+    "wave_time_hr": 4.195051,
+    "wms_time_hr": 5.958446
+  },
+  {
+    "work_date": "2026-09-24",
+    "center": "양지2센터",
+    "owner": "데스커",
+    "zone": "M-N",
+    "worker_name": "[주간]권혁",
+    "shift": "주간",
+    "pick_amount": 32665000.0,
+    "pick_box": 692,
+    "wave_time_hr": 2.729068,
+    "wms_time_hr": 7.65521
+  },
+  {
+    "work_date": "2026-09-24",
+    "center": "양지2센터",
+    "owner": "데스커",
+    "zone": "M-N",
+    "worker_name": "[주간]박이수",
+    "shift": "주간",
+    "pick_amount": 2815900.0,
+    "pick_box": 22,
+    "wave_time_hr": 0.109536,
+    "wms_time_hr": 3.004638
+  },
+  {
+    "work_date": "2026-09-24",
+    "center": "양지2센터",
+    "owner": "데스커",
+    "zone": "M-N",
+    "worker_name": "[주간]최우성",
+    "shift": "주간",
+    "pick_amount": 20675200.0,
+    "pick_box": 369,
+    "wave_time_hr": 3.819512,
+    "wms_time_hr": 7.518142
+  },
+  {
+    "work_date": "2026-09-24",
+    "center": "양지2센터",
+    "owner": "데스커",
+    "zone": "S",
+    "worker_name": "[주간]박이수",
+    "shift": "주간",
+    "pick_amount": 106800.0,
+    "pick_box": 13,
+    "wave_time_hr": 0.236133,
+    "wms_time_hr": 0.236133
+  }
+]
