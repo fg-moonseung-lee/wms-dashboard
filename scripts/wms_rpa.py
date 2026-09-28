@@ -287,8 +287,9 @@ def update_workers(session: requests.Session, conn, today_str: str):
         elif pid.startswith("FS"):  owner = "DPC"
         else: continue
 
-        shift   = "주간" if "[주간]" in user_nm else ("야간" if "[야간]" in user_nm else "")
-        display = re.sub(r'\[주간\]|\[야간\]', '', user_nm).strip()
+        shift_m = re.match(r"^\[([^\]]+)\]", user_nm)
+        shift   = shift_m.group(1) if shift_m else ""
+        display = re.sub(r'^\[[^\]]+\]', '', user_nm).strip()
         workers.append({
             "worker_id": user_id, "worker_name": user_nm,
             "display_name": display, "owner": owner,

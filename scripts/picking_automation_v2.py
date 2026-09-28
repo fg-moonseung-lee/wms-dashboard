@@ -725,7 +725,8 @@ def _read_picking_workers(wb, slots: dict, date_str: str) -> list:
             box = _safe(h[i][0]);  amt = _safe(ii[i][0])
             if box == 0 and amt == 0:
                 continue
-            shift = "야간" if "[야간]" in name else "주간"
+            shift_m = re.match(r"^\[([^\]]+)\]", name)
+            shift = shift_m.group(1) if shift_m else "주간"
             key = (zone, name)
             if key in merged:
                 agg = merged[key]

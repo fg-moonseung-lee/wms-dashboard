@@ -124,7 +124,7 @@ export interface AttendanceDaily {
   updated_at:  string
 }
 
-const _TAG_RE = /^\[(주간|야간)\]/
+const _TAG_RE = /^\[[^\]]+\]/
 export function stripTag(name: string): string {
   return name.replace(_TAG_RE, '').trim()
 }
@@ -145,6 +145,20 @@ export const CONTRACTOR_OWNER: Record<string, string> = {
   '3PL':   '하나물류',
 }
 // 상하차(하나물류)/수출(제이앤테크)은 아직 별도 데이터 소스가 없어 매핑 보류 — 추후 확장
+
+export const CONTRACTORS = ['IPC', '바로서비스', '에프스토리', '한국사람들', '하나물류'] as const
+
+// 양지1센터(YA)는 WMS 로그인 ID 접두사가 실제 소속을 그대로 담고 있어(workers.worker_id,
+// update_workers() 참조) zone/brand 추정보다 훨씬 정확함 — 피킹+입고 겸업자도 이걸로
+// 하나의 소속으로 고정됨. 데스커(Y2)/3PL(Y3)은 workers 테이블에 아예 없음(수집 대상이
+// YA뿐) — 그 두 센터는 어차피 센터 전체가 단일 도급사라 zone/brand 매핑으로 충분.
+export function contractorFromWorkerId(workerId: string): string | null {
+  const id = workerId.toUpperCase()
+  if (id.startsWith('IPC')) return 'IPC'
+  if (id.startsWith('BS'))  return '바로서비스'
+  if (id.startsWith('FS'))  return '에프스토리'
+  return null
+}
 
 /* ── 입고유형 (정산용 세분화 6유형) ── */
 export const INBOUND_TYPES = [

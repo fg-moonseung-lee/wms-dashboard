@@ -104,7 +104,7 @@ BRANDS = {
 TYPES_BASIC  = ["정상입고", "반품입고", "CUT"]
 TYPES_DETAIL = ["정상입고", "반품입고", "정품화입고", "재입고", "검사이동,업체반송", "CUT"]
 
-_TAG_RE = re.compile(r"^\[(주간|야간)\]")
+_TAG_RE = re.compile(r"^\[[^\]]+\]")
 
 
 def strip_tag(name: str) -> str:
