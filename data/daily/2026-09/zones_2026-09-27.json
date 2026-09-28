@@ -6,7 +6,7 @@
     "zone": "H-I",
     "pick_amount": 72834180.0,
     "pick_box": 639,
-    "wave_time_hr": 15.3297,
+    "wave_time_hr": 15.4746,
     "wms_time_hr": 27.7671
   },
   {
@@ -16,7 +16,7 @@
     "zone": "C-D",
     "pick_amount": 81104170.0,
     "pick_box": 1662,
-    "wave_time_hr": 31.1831,
+    "wave_time_hr": 31.2186,
     "wms_time_hr": 42.4459
   },
   {
@@ -26,7 +26,7 @@
     "zone": "A-P",
     "pick_amount": 124257220.0,
     "pick_box": 1451,
-    "wave_time_hr": 29.6864,
+    "wave_time_hr": 30.0858,
     "wms_time_hr": 74.1289
   },
   {
@@ -36,7 +36,7 @@
     "zone": "M-N",
     "pick_amount": 116265200.0,
     "pick_box": 1985,
-    "wave_time_hr": 20.5052,
+    "wave_time_hr": 20.5779,
     "wms_time_hr": 32.4662
   },
   {
@@ -46,7 +46,7 @@
     "zone": "S",
     "pick_amount": 35000.0,
     "pick_box": 3,
-    "wave_time_hr": 0.0051,
+    "wave_time_hr": 0.0076,
     "wms_time_hr": 0.0602
   },
   {

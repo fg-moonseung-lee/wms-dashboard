@@ -20,7 +20,7 @@
     "shift": "야간",
     "pick_amount": 5728800.0,
     "pick_box": 70,
-    "wave_time_hr": 0.564848,
+    "wave_time_hr": 0.588384,
     "wms_time_hr": 2.068569
   },
   {
@@ -44,7 +44,7 @@
     "shift": "야간",
     "pick_amount": 19485380.0,
     "pick_box": 191,
-    "wave_time_hr": 4.520296,
+    "wave_time_hr": 4.641647,
     "wms_time_hr": 7.385796
   },
   {
@@ -104,7 +104,7 @@
     "shift": "야간",
     "pick_amount": 14970990.0,
     "pick_box": 329,
-    "wave_time_hr": 4.738991,
+    "wave_time_hr": 4.774489,
     "wms_time_hr": 7.120618
   },
   {
@@ -152,7 +152,7 @@
     "shift": "야간",
     "pick_amount": 948200.0,
     "pick_box": 17,
-    "wave_time_hr": 0.129919,
+    "wave_time_hr": 0.147242,
     "wms_time_hr": 2.755086
   },
   {
@@ -212,7 +212,7 @@
     "shift": "야간",
     "pick_amount": 18221910.0,
     "pick_box": 244,
-    "wave_time_hr": 3.658712,
+    "wave_time_hr": 3.709527,
     "wms_time_hr": 7.39459
   },
   {
@@ -224,7 +224,7 @@
     "shift": "야간",
     "pick_amount": 6107500.0,
     "pick_box": 18,
-    "wave_time_hr": 0.739244,
+    "wave_time_hr": 0.897653,
     "wms_time_hr": 7.536085
   },
   {
@@ -236,7 +236,7 @@
     "shift": "야간",
     "pick_amount": 352400.0,
     "pick_box": 1,
-    "wave_time_hr": 0.0,
+    "wave_time_hr": 0.022906,
     "wms_time_hr": 0.0
   },
   {
@@ -248,7 +248,7 @@
     "shift": "야간",
     "pick_amount": 7695950.0,
     "pick_box": 18,
-    "wave_time_hr": 0.095546,
+    "wave_time_hr": 0.171982,
     "wms_time_hr": 8.849031
   },
   {
@@ -260,7 +260,7 @@
     "shift": "야간",
     "pick_amount": 6054900.0,
     "pick_box": 17,
-    "wave_time_hr": 0.125771,
+    "wave_time_hr": 0.18294,
     "wms_time_hr": 6.452083
   },
   {
@@ -272,7 +272,7 @@
     "shift": "주간",
     "pick_amount": 1891110.0,
     "pick_box": 22,
-    "wave_time_hr": 0.155276,
+    "wave_time_hr": 0.171621,
     "wms_time_hr": 6.139631
   },
   {
@@ -293,7 +293,7 @@
     "owner": "데스커",
     "zone": "M-N",
     "worker_name": "[석간]박성준",
-    "shift": "주간",
+    "shift": "석간",
     "pick_amount": 16448400.0,
     "pick_box": 364,
     "wave_time_hr": 4.871487,
@@ -305,7 +305,7 @@
     "owner": "데스커",
     "zone": "M-N",
     "worker_name": "[석간]임시13",
-    "shift": "주간",
+    "shift": "석간",
     "pick_amount": 17191600.0,
     "pick_box": 302,
     "wave_time_hr": 4.020421,
@@ -317,7 +317,7 @@
     "owner": "데스커",
     "zone": "M-N",
     "worker_name": "[석간]정희훈",
-    "shift": "주간",
+    "shift": "석간",
     "pick_amount": 22036900.0,
     "pick_box": 403,
     "wave_time_hr": 4.080366,
@@ -356,7 +356,7 @@
     "shift": "야간",
     "pick_amount": 26889000.0,
     "pick_box": 332,
-    "wave_time_hr": 0.000217,
+    "wave_time_hr": 0.000477,
     "wms_time_hr": 0.14608
   },
   {
@@ -368,7 +368,7 @@
     "shift": "주간",
     "pick_amount": 14463600.0,
     "pick_box": 261,
-    "wave_time_hr": 3.261556,
+    "wave_time_hr": 3.334035,
     "wms_time_hr": 6.319992
   },
   {
@@ -380,7 +380,7 @@
     "shift": "주간",
     "pick_amount": 35000.0,
     "pick_box": 3,
-    "wave_time_hr": 0.005094,
+    "wave_time_hr": 0.007642,
     "wms_time_hr": 0.060231
   },
   {
