@@ -70,7 +70,7 @@ function BulkFill({ count, onApply }: { count: number; onApply: (hours: number) 
         onClick={() => { onApply(n); setText('') }}
         className="text-[11px] font-semibold text-letusBlue border border-letusBlue rounded-lg px-2.5 py-1.5 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-blue-50 transition-colors whitespace-nowrap"
       >
-        빈칸({count}명)에 일괄 적용
+        선택 {count}명에 일괄 적용
       </button>
     </div>
   )
@@ -81,18 +81,38 @@ function ShiftSection({ shift, rows, save, bulkFillEmpty }: {
   save: (name: string, hours: number) => Promise<boolean>
   bulkFillEmpty: (names: string[], hours: number) => Promise<boolean>
 }) {
-  const emptyCount = rows.filter(r => r.hours == null).length
+  // 부분 잔업 등으로 일부만 다른 시간이 적용되는 경우가 있어, 대상자를 체크박스로
+  // 골라서 그 사람들에게만(그 중 아직 미입력인 사람만) 일괄 적용 — 기본은 전체 선택.
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(rows.map(r => r.worker_name)))
+  const rowKey = rows.map(r => r.worker_name).join(',')
+  useEffect(() => { setSelected(new Set(rows.map(r => r.worker_name))) }, [rowKey])
+
+  const allChecked = rows.length > 0 && rows.every(r => selected.has(r.worker_name))
+  const toggleAll = () => setSelected(allChecked ? new Set() : new Set(rows.map(r => r.worker_name)))
+  const toggleOne = (name: string) => setSelected(prev => {
+    const next = new Set(prev)
+    if (next.has(name)) next.delete(name); else next.add(name)
+    return next
+  })
+
+  const selectedEmptyCount = rows.filter(r => selected.has(r.worker_name) && r.hours == null).length
 
   return (
     <Card>
       <CardHeader className="px-5 py-3.5 border-b border-border flex-row items-center justify-between space-y-0">
         <CardTitle className="text-sm font-semibold">{shift} <span className="text-muted-foreground font-normal">({rows.length}명)</span></CardTitle>
-        <BulkFill count={emptyCount} onApply={h => bulkFillEmpty(rows.map(r => r.worker_name), h)} />
+        <BulkFill
+          count={selectedEmptyCount}
+          onApply={h => bulkFillEmpty(rows.filter(r => selected.has(r.worker_name)).map(r => r.worker_name), h)}
+        />
       </CardHeader>
       <CardContent className="p-0">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-border text-muted-foreground">
+              <th className="w-10 py-2.5 px-5">
+                <input type="checkbox" checked={allChecked} onChange={toggleAll} className="accent-letusBlue" />
+              </th>
               <th className="text-left py-2.5 px-5 font-medium">이름</th>
               <th className="text-left py-2.5 px-5 font-medium">도급사</th>
               <th className="text-right py-2.5 px-5 font-medium">WMS시간(참고)</th>
@@ -102,6 +122,12 @@ function ShiftSection({ shift, rows, save, bulkFillEmpty }: {
           <tbody>
             {rows.map(r => (
               <tr key={r.worker_name} className="border-b border-border/40 hover:bg-muted/30 transition-colors">
+                <td className="py-2.5 px-5">
+                  <input
+                    type="checkbox" checked={selected.has(r.worker_name)}
+                    onChange={() => toggleOne(r.worker_name)} className="accent-letusBlue"
+                  />
+                </td>
                 <td className="py-2.5 px-5 font-medium text-gray-700">{r.worker_name}</td>
                 <td className="py-2.5 px-5 text-gray-500">{r.contractor}</td>
                 <td className="py-2.5 px-5 text-right tabular-nums text-gray-400">
