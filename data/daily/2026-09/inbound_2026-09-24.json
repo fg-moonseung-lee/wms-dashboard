@@ -1,0 +1,32 @@
+[
+  {
+    "work_date": "2026-09-24",
+    "brand": "일룸",
+    "worker": "[주간]김혜성",
+    "worker_display": "김혜성",
+    "rows": 1,
+    "hours": 0.0,
+    "basic_qty_normal": 8.0,
+    "basic_amt_normal": 116000.0,
+    "basic_qty_return": 0.0,
+    "basic_amt_return": 0.0,
+    "basic_qty_cut": 0.0,
+    "basic_amt_cut": 0.0,
+    "basic_pallets": 1,
+    "detail_qty_normal": 0.0,
+    "detail_amt_normal": 0.0,
+    "detail_qty_return": 0.0,
+    "detail_amt_return": 0.0,
+    "detail_qty_certify": 0.0,
+    "detail_amt_certify": 0.0,
+    "detail_qty_reentry": 0.0,
+    "detail_amt_reentry": 0.0,
+    "detail_qty_inspect": 8.0,
+    "detail_amt_inspect": 116000.0,
+    "detail_qty_cut": 0.0,
+    "detail_amt_cut": 0.0,
+    "detail_pallets": 1,
+    "qty_total": 8.0,
+    "amt_total": 116000.0
+  }
+]
