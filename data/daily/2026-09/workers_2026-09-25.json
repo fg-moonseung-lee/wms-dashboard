@@ -1,0 +1,86 @@
+[
+  {
+    "work_date": "2026-09-25",
+    "center": "양지1센터",
+    "owner": "일룸",
+    "zone": "H-I",
+    "worker_name": "[야간]윤길제",
+    "shift": "야간",
+    "pick_amount": 30546090.0,
+    "pick_box": 316,
+    "wave_time_hr": 5.759807,
+    "wms_time_hr": 8.292311
+  },
+  {
+    "work_date": "2026-09-25",
+    "center": "양지1센터",
+    "owner": "일룸",
+    "zone": "C-D",
+    "worker_name": "[야간]전상운",
+    "shift": "야간",
+    "pick_amount": 8225100.0,
+    "pick_box": 248,
+    "wave_time_hr": 4.925237,
+    "wms_time_hr": 7.395392
+  },
+  {
+    "work_date": "2026-09-25",
+    "center": "양지1센터",
+    "owner": "일룸",
+    "zone": "A-P",
+    "worker_name": "[야간]윤길제",
+    "shift": "야간",
+    "pick_amount": 6524600.0,
+    "pick_box": 18,
+    "wave_time_hr": 0.032573,
+    "wms_time_hr": 7.982962
+  },
+  {
+    "work_date": "2026-09-25",
+    "center": "양지1센터",
+    "owner": "일룸",
+    "zone": "A-P",
+    "worker_name": "[야간]전상운",
+    "shift": "야간",
+    "pick_amount": 1119000.0,
+    "pick_box": 17,
+    "wave_time_hr": 0.080486,
+    "wms_time_hr": 8.405953
+  },
+  {
+    "work_date": "2026-09-25",
+    "center": "양지1센터",
+    "owner": "일룸",
+    "zone": "DPS",
+    "worker_name": "DPS",
+    "shift": "주간",
+    "pick_amount": 21500.0,
+    "pick_box": 3,
+    "wave_time_hr": 0.016427,
+    "wms_time_hr": 0.016427
+  },
+  {
+    "work_date": "2026-09-25",
+    "center": "양지2센터",
+    "owner": "데스커",
+    "zone": "M-N",
+    "worker_name": "[주간]최우성",
+    "shift": "주간",
+    "pick_amount": 11517900.0,
+    "pick_box": 203,
+    "wave_time_hr": 2.006747,
+    "wms_time_hr": 6.137986
+  },
+  {
+    "work_date": "2026-09-25",
+    "center": "양지2센터",
+    "owner": "데스커",
+    "zone": "S",
+    "worker_name": "유승훈",
+    "shift": "주간",
+    "pick_amount": 451780.0,
+    "pick_box": 23,
+    "wave_time_hr": 0.420849,
+    "wms_time_hr": 0.484576
+  }
+]

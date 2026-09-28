@@ -1,0 +1,54 @@
+{
+  "H-I": {
+    "pick_box": 316.0,
+    "pick_amount": 30546090.0
+  },
+  "C-D": {
+    "pick_box": 248.0,
+    "pick_amount": 8225100.0
+  },
+  "A-P": {
+    "pick_box": 35.0,
+    "pick_amount": 7643600.0
+  },
+  "DPS": {
+    "pick_box": 3.0,
+    "pick_amount": 21500.0
+  },
+  "E-F": {
+    "pick_box": 0.0,
+    "pick_amount": 0.0
+  },
+  "J-K": {
+    "pick_box": 0.0,
+    "pick_amount": 0.0
+  },
+  "L": {
+    "pick_box": 0.0,
+    "pick_amount": 0.0
+  },
+  "B": {
+    "pick_box": 0.0,
+    "pick_amount": 0.0
+  },
+  "L/S": {
+    "pick_box": 0.0,
+    "pick_amount": 0.0
+  },
+  "M-N": {
+    "pick_box": 203.0,
+    "pick_amount": 11517900.0
+  },
+  "S": {
+    "pick_box": 23.0,
+    "pick_amount": 451780.0
+  },
+  "W": {
+    "pick_box": 0.0,
+    "pick_amount": 0.0
+  },
+  "R": {
+    "pick_box": 0.0,
+    "pick_amount": 0.0
+  }
+}
