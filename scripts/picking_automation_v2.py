@@ -299,56 +299,94 @@ def _filter_f1(df: pd.DataFrame, t: date, raw_path=None) -> pd.DataFrame:
     return df[~df["LOCATION"].astype(str).str.upper().str.startswith("Y-REC")]
 
 
+def _session_mask(df: pd.DataFrame, tag: str, anchor_start, anchor_end,
+                   gap_hours: float = 6.0, max_session_hours: float = 16.0) -> pd.Series:
+    """[tag] 태그 행 중, 그 업무일자에 속하는 세션(작업자별 연속 근무)에 속하는 행만
+    True로 표시 — 고정 시각 컷오프 대신 세션 기반으로 판정한다(2026-09-28, 데스커 주간
+    잔업 23시~새벽, 야간 잔업 09시 이후 케이스에서 픽이 통째로 누락되던 문제 수정).
+
+    - 세션 경계: 같은 작업자의 타임스탬프를 정렬해 연속 픽 사이 공백이 gap_hours를
+      넘으면 새 세션으로 끊는다(식사시간 등 정상 공백보다 훨씬 길고, 퇴근~다음 출근
+      공백보다는 훨씬 짧은 값).
+    - 세션 "시작 시각"이 anchor_start~anchor_end 안에 있는 세션만 그 업무일자로 인정 —
+      다음 업무일에 새로 시작하는 완전히 다른 근무(같은 파일에 인접 업무일 데이터가
+      같이 들어있음)가 섞여 들어오는 걸 막는다. 세션이 일단 앵커 안에서 시작했다면,
+      그 뒤로 이어지는 잔업은 max_session_hours까지 길이 제한 없이 전부 포함한다.
+    """
+    result = pd.Series(False, index=df.index)
+    tagged = df["작업자"].astype(str).str.match(fr"^\[{tag}\]")
+    if not tagged.any():
+        return result
+    for _, g in df[tagged].groupby("작업자"):
+        g = g.sort_values("작업일시")
+        ts = g["작업일시"]
+        gap_h = ts.diff().dt.total_seconds().fillna(0) / 3600
+        session_id = (gap_h > gap_hours).cumsum()
+        starts = session_id.map(g.groupby(session_id)["작업일시"].min())
+        in_anchor = (starts >= anchor_start) & (starts <= anchor_end)
+        within_cap = (ts - starts) <= pd.Timedelta(hours=max_session_hours)
+        result.loc[g.index[in_anchor & within_cap]] = True
+    return result
+
+
 def _filter_i1(df: pd.DataFrame, t: date, raw_path=None) -> pd.DataFrame:
     """일룸: 주간 + 야간, Y-REC 제외, [주간]/[야간] 태그 필수 (DPS P-3XX 예외).
 
-    파일명 종료 날짜(_NNDD)로 야간 윈도우 동적 결정 — _i1_d1_window 참조.
-    """
-    day_start, day_end, night_start, night_end = _i1_d1_window(t, raw_path)
-    mask = df["작업일시"].between(day_start, day_end) | df["작업일시"].between(night_start, night_end)
-    out  = df[mask & ~df["LOCATION"].astype(str).str.upper().str.startswith("Y-REC")].copy()
-    tagged  = out["작업자"].astype(str).str.match(r"^\[(주간|야간)\]")
-    dps_loc = out["LOCATION"].astype(str).apply(
-        lambda loc: bool(re.match(r"^P-(\d+)", loc, re.I))
-                    and int(re.match(r"^P-(\d+)", loc, re.I).group(1)) >= 300
-    )
-    # DPS(P-3XX)는 주간만 포함 — 야간 DPS는 다음날 업무일자에 귀속
-    dps_day = out["작업일시"].between(day_start, day_end)
-    return out[tagged | (dps_loc & dps_day)]
-
-
-def _filter_d1(df: pd.DataFrame, t: date, raw_path=None) -> pd.DataFrame:
-    """데스커: 주간 + 야간, Y-REC 제외.
-
-    파일명 종료 날짜(_NNDD)로 야간 윈도우 동적 결정 — _i1_d1_window 참조.
-    주간/야간 판단:
-    - [주간] 태그: day_start 이후 시간 제한 없이 주간으로 포함
-      (22시까지 wave 연장 케이스 처리 — 퇴근 전 wave 완료까지 주간 귀속)
-    - [야간] 태그: night_start - 1h(20:00)부터 허용 (얼리스타트)
-                  night_end(08:00) 이후여도 09:00 이전이면 전날 야간 귀속
-                  (마무리 wave가 08시를 넘겨도 야간 작업자라면 전날 실적)
-    - 무태그: night_start(21:00) 이후라면 야간 연장으로 인정
+    주간/야간 세션 판정은 _session_mask 참조(고정 시각 컷오프 대신 세션 기반,
+    2026-09-28) — 잔업이 길어져도 누락되지 않는다.
     """
     day_start, day_end, night_start, night_end = _i1_d1_window(t, raw_path)
     night_start_early = night_start - pd.Timedelta(hours=1)
-    # [야간] 태그 전용 야간 종료: 09:00 이전까지 전날 야간으로 처리
-    night_end_tag = pd.Timestamp(night_end).replace(hour=9, minute=0, second=0)
+    # 앵커는 "세션이 언제 시작해야 그날 야간으로 인정할지"의 범위 — 야간 세션은 저녁부터
+    # 시작해 다음날 새벽까지 이어지는 게 정상이라 앵커 자체가 다음날 오전까지 넓어야 함
+    # (실사례: 작업자 전체 활동이 자정 이후에만 있던 케이스 — 09:00 이전까지 인정).
+    night_anchor_end = pd.Timestamp(night_end).replace(hour=9, minute=0, second=0)
+
     no_yrec = ~df["LOCATION"].astype(str).str.upper().str.startswith("Y-REC")
+    day_mask   = _session_mask(df, "주간", day_start, day_end)
+    night_mask = _session_mask(df, "야간", night_start_early, night_anchor_end)
+
+    dps_loc = df["LOCATION"].astype(str).apply(
+        lambda loc: bool(re.match(r"^P-(\d+)", loc, re.I))
+                    and int(re.match(r"^P-(\d+)", loc, re.I).group(1)) >= 300
+    )
+    # DPS(P-3XX)는 주간만 포함 — 야간 DPS는 다음날 업무일자에 귀속 (기존 규칙 그대로)
+    dps_day = df["작업일시"].between(day_start, day_end)
+
+    return df[(day_mask | night_mask | (dps_loc & dps_day)) & no_yrec].copy()
+
+
+def _filter_d1(df: pd.DataFrame, t: date, raw_path=None) -> pd.DataFrame:
+    """데스커: 주간 + 야간 + 석간, Y-REC 제외.
+
+    주간/야간/석간 세션 판정은 _session_mask 참조(고정 시각 컷오프 대신 세션 기반,
+    2026-09-28) — 잔업이 길어져도(주간 새벽까지, 야간 09시 이후 등) 누락되지 않는다.
+    석간(2센터 신설, 한국사람들)은 실측 결과 14:35~21:52 무렵 활동 — 앵커 13:00~16:00.
+    무태그(레거시) 행은 기존 고정 시각 규칙 그대로 유지(변경 범위 최소화).
+    """
+    day_start, day_end, night_start, night_end = _i1_d1_window(t, raw_path)
+    night_start_early = night_start - pd.Timedelta(hours=1)
+    # 앵커는 "세션이 언제 시작해야 그날 야간으로 인정할지"의 범위 — 야간 세션은 저녁부터
+    # 시작해 다음날 새벽까지 이어지는 게 정상이라 앵커 자체가 다음날 오전까지 넓어야 함
+    # (실사례: 작업자 전체 활동이 자정 이후에만 있던 케이스 — 09:00 이전까지 인정).
+    night_anchor_end = pd.Timestamp(night_end).replace(hour=9, minute=0, second=0)
+    eve_anchor_start = pd.Timestamp(t).replace(hour=13, minute=0, second=0)
+    eve_anchor_end   = pd.Timestamp(t).replace(hour=16, minute=0, second=0)
+
+    no_yrec = ~df["LOCATION"].astype(str).str.upper().str.startswith("Y-REC")
+    day_mask   = _session_mask(df, "주간", day_start, day_end)
+    night_mask = _session_mask(df, "야간", night_start_early, night_anchor_end)
+    eve_mask   = _session_mask(df, "석간", eve_anchor_start, eve_anchor_end)
+
     is_night_tag = df["작업자"].astype(str).str.match(r"^\[야간\]")
     is_day_tag   = df["작업자"].astype(str).str.match(r"^\[주간\]")
-    # [주간] 태그는 당일 23:59까지 허용 (22시 연장 wave 처리); 무태그는 day_end(20:59)까지
-    day_tag_end  = pd.Timestamp(t).replace(hour=23, minute=59, second=59)
-    # 주간: [주간] 태그는 day_start~23:59 / 무태그는 day_start~day_end(20:59)
-    mask_day = (
-        (df["작업일시"].between(day_start, day_end) & ~is_night_tag) |
-        (df["작업일시"].between(day_start, day_tag_end) & is_day_tag)
-    )
-    # 야간: [야간] 태그는 얼리스타트(20:00)~09:00 / 무태그(비[주간])는 21:00~08:00
-    mask_night = (
-        (df["작업일시"].between(night_start_early, night_end_tag) & is_night_tag) |
-        (df["작업일시"].between(night_start, night_end) & ~is_night_tag & ~is_day_tag)
-    )
-    return df[(mask_day | mask_night) & no_yrec].copy()
+    is_eve_tag   = df["작업자"].astype(str).str.match(r"^\[석간\]")
+    is_tagged    = is_night_tag | is_day_tag | is_eve_tag
+    # 무태그(레거시) 폴백 — 기존 고정 창 규칙 그대로
+    untagged_day   = df["작업일시"].between(day_start, day_end) & ~is_tagged
+    untagged_night = df["작업일시"].between(night_start, night_end) & ~is_tagged
+
+    return df[(day_mask | night_mask | eve_mask | untagged_day | untagged_night) & no_yrec].copy()
 
 
 def _filter_du1(df: pd.DataFrame, t: date, raw_path=None) -> pd.DataFrame:
