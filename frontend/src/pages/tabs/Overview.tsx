@@ -20,12 +20,12 @@ import type { Period } from '../../lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartTooltip } from '@/components/ChartTooltip'
 import { exportZoneExcel } from '../../lib/exportExcel'
+import { fmtWon as fmtM } from '../../lib/format'
 
 export type Metric = 'amount' | 'box'
 
 interface Props { period: Period; metric: Metric; granularity?: Granularity }
 
-const fmtM   = (v: number) => `${v.toFixed(1)}백만`
 const fmtBox = (v: number) => `${v.toLocaleString('ko-KR')}박스`
 const fmtNum = (v: number) => v.toLocaleString('ko-KR')
 
@@ -400,8 +400,8 @@ export default function Overview({ period, metric, granularity = 'month' }: Prop
     color: CENTER_COLOR[c],
   }))
 
-  const donutLine1 = isAmt ? fmtNum(Math.round(total.amount)) : fmtNum(total.box)
-  const donutLine2 = isAmt ? '백만원' : '박스'
+  const donutLine1 = isAmt ? fmtM(total.amount) : fmtNum(total.box)
+  const donutLine2 = isAmt ? '' : '박스'
 
   const goToBrand = (owner: string) =>
     navigate('/picking/brand', { state: { owner } })
@@ -540,7 +540,7 @@ export default function Overview({ period, metric, granularity = 'month' }: Prop
       <Card>
         <CardHeader className="px-5 py-3.5 border-b border-border">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold">{granLabel} {isAmt ? '피킹금액 (백만원)' : '피킹박스수'} 추이</CardTitle>
+            <CardTitle className="text-sm font-semibold">{granLabel} {isAmt ? '피킹금액' : '피킹박스수'} 추이</CardTitle>
             <span className="text-xs text-muted-foreground">{trendScope}</span>
           </div>
         </CardHeader>
@@ -554,7 +554,7 @@ export default function Overview({ period, metric, granularity = 'month' }: Prop
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} />
                 <YAxis
                   tick={{ fontSize: 11, fill: '#6b7280' }}
-                  tickFormatter={v => `${v}백만`}
+                  tickFormatter={v => fmtM(v)}
                 />
                 <Tooltip
                   content={(props: any) => (

@@ -230,13 +230,6 @@ export default function PickingLayout() {
 
           <span className="text-gray-200 select-none">|</span>
 
-          {/* 단위 표시 */}
-          {metric === 'amount' && (
-            <span className="text-[10px] text-gray-400 border border-gray-200 px-2 py-0.5 rounded shrink-0">
-              단위: 백만원
-            </span>
-          )}
-
           {/* 지표 토글 */}
           <div className="flex items-center gap-0.5 bg-gray-100 rounded-md p-0.5">
             {(['amount', 'box'] as Metric[]).map(m => (

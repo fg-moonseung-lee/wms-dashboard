@@ -14,10 +14,10 @@ import type { Period, WorkerAgg, DailyPoint } from '../../lib/types'
 import type { Metric } from './Overview'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartTooltip } from '@/components/ChartTooltip'
+import { fmtWon as fmtM } from '../../lib/format'
 
 interface Props { period: Period; metric: Metric }
 
-const fmtM   = (v: number) => `${v.toFixed(1)}백만`
 const fmtBox = (v: number) => `${v.toLocaleString('ko-KR')}박스`
 const fmtNum = (v: number) => v.toLocaleString('ko-KR')
 
@@ -150,7 +150,7 @@ function WorkerTable({ workers, metric, onSelect }: {
             <th className="text-left py-2 px-3 text-gray-400 font-medium">작업자</th>
             <th className="text-left py-2 px-3 text-gray-400 font-medium">구역</th>
             <th className="text-left py-2 px-3 text-gray-400 font-medium">시프트</th>
-            <th className="text-right py-2 px-3 text-gray-400 font-medium">{isAmt ? '금액(백만)' : '박스수'}</th>
+            <th className="text-right py-2 px-3 text-gray-400 font-medium">{isAmt ? '금액' : '박스수'}</th>
             <th className="text-right py-2 px-3 text-gray-400 font-medium">WMS시간</th>
             <th className="text-right py-2 px-3 text-gray-400 font-medium">작업시간</th>
           </tr>
@@ -259,7 +259,7 @@ function WorkerDailyDetail({ daily, metric, attendance }: {
           <thead>
             <tr className="border-b border-gray-100">
               <th className="text-left py-1.5 px-2 text-gray-400 font-medium">날짜</th>
-              <th className="text-right py-1.5 px-2 text-gray-400 font-medium">{isAmt ? '금액(백만)' : '박스수'}</th>
+              <th className="text-right py-1.5 px-2 text-gray-400 font-medium">{isAmt ? '금액' : '박스수'}</th>
               <th className="text-right py-1.5 px-2 text-gray-400 font-medium">WMS시간</th>
               <th className="text-right py-1.5 px-2 text-gray-400 font-medium">근무시간</th>
               <th className="text-right py-1.5 px-2 text-gray-400 font-medium">작업시간</th>

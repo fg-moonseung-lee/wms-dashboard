@@ -17,10 +17,10 @@ import type { Period } from '../../lib/types'
 import type { Metric } from './Overview'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartTooltip } from '@/components/ChartTooltip'
+import { fmtWon as fmtM } from '../../lib/format'
 
 interface Props { period: Period; metric: Metric; granularity: Granularity }
 
-const fmtM   = (v: number) => `${v.toFixed(1)}백만`
 const fmtBox = (v: number) => `${v.toLocaleString('ko-KR')}박스`
 const fmtNum = (v: number) => v.toLocaleString('ko-KR')
 
@@ -28,7 +28,7 @@ function metricVal(r: ZoneDaily, metric: Metric) {
   return metric === 'amount' ? (r.pick_amount ?? 0) : (r.pick_box ?? 0)
 }
 function metricScale(metric: Metric) { return metric === 'amount' ? 1_000_000 : 1 }
-function metricUnit(metric: Metric)  { return metric === 'amount' ? '백만원' : '박스' }
+function metricUnit(metric: Metric)  { return metric === 'amount' ? '' : '박스' }
 
 /* ── Zone별 집계 ── */
 interface ZoneRow {
@@ -98,7 +98,7 @@ function ZoneTable({ zones, metric, onSelect }: { zones: ZoneRow[]; metric: Metr
           <tr className="border-b border-gray-100">
             <th className="text-left py-2 px-3 text-gray-400 font-medium">구역</th>
             <th className="text-right py-2 px-3 text-gray-400 font-medium">시간당생산성(WMS)</th>
-            <th className="text-right py-2 px-3 text-gray-400 font-medium">{isAmt ? '금액(백만)' : '박스수'}</th>
+            <th className="text-right py-2 px-3 text-gray-400 font-medium">{isAmt ? '금액' : '박스수'}</th>
             <th className="text-right py-2 px-3 text-gray-400 font-medium">WMS시간</th>
             <th className="text-right py-2 px-3 text-gray-400 font-medium">근태시간</th>
             <th className="text-right py-2 px-3 text-gray-400 font-medium">작업시간</th>
@@ -114,7 +114,7 @@ function ZoneTable({ zones, metric, onSelect }: { zones: ZoneRow[]; metric: Metr
               onClick={() => onSelect?.(z.zone)}>
               <td className="py-2 px-3 font-medium text-gray-700">{z.zone}</td>
               <td className="py-2 px-3 text-right text-gray-700">
-                {z.wms > 0 ? (isAmt ? `${pph.toFixed(1)}백만/h` : `${fmtNum(Math.round(pph))}박스/h`) : '-'}
+                {z.wms > 0 ? (isAmt ? `${fmtM(pph)}/h` : `${fmtNum(Math.round(pph))}박스/h`) : '-'}
               </td>
               <td className="py-2 px-3 text-right text-gray-700">
                 {isAmt ? fmtM(z.amount / 1_000_000) : fmtNum(z.box)}
@@ -263,7 +263,7 @@ export default function BrandDetail({ period, metric, granularity }: Props) {
         </SectionCard>
 
         {/* 구역별 실적 추이 (전체 히스토리) */}
-        <SectionCard title={`${selectedOwner} · ${granLabel} 구역별 추이 (${unit})`}>
+        <SectionCard title={`${selectedOwner} · ${granLabel} 구역별 추이${unit ? ` (${unit})` : ''}`}>
           {trendData.length === 0 ? (
             <p className="text-xs text-gray-300 text-center py-8">데이터 없음</p>
           ) : (
@@ -273,7 +273,7 @@ export default function BrandDetail({ period, metric, granularity }: Props) {
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} />
                 <YAxis
                   tick={{ fontSize: 11, fill: '#6b7280' }}
-                  tickFormatter={v => isAmt ? `${v}백만` : fmtNum(v)}
+                  tickFormatter={v => isAmt ? fmtM(v) : fmtNum(v)}
                 />
                 <Tooltip
                   content={(props: any) => (

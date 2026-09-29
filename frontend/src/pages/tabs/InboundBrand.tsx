@@ -192,7 +192,7 @@ export default function InboundBrand({ period, metric, granularity = 'day' }: Pr
         <Card className="col-span-3">
           <CardHeader className="px-5 py-3.5 border-b border-border">
             <CardTitle className="text-sm font-semibold">
-              유형별 입고 추이 {metric === 'amount' ? '(백만원)' : '(수량)'}
+              유형별 입고 추이{metric === 'amount' ? '' : ' (수량)'}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-5">

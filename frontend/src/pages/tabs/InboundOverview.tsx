@@ -16,10 +16,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartTooltip } from '@/components/ChartTooltip'
 import type { InboundMetric } from '../inbound/InboundLayout'
 import { exportInboundExcel } from '../../lib/exportInboundExcel'
+import { fmtWon as fmtM } from '../../lib/format'
 
 interface Props { period: Period; metric: InboundMetric; granularity?: Granularity }
 
-const fmtM     = (v: number) => `${v.toFixed(1)}백만`
 const fmtQty   = (v: number) => `${v.toLocaleString('ko-KR')}개`
 const fmtPlt   = (v: number) => `${v.toLocaleString('ko-KR')}plt`
 const fmtNum   = (v: number) => v.toLocaleString('ko-KR')
@@ -57,7 +57,7 @@ function metricFmt(v: number, metric: InboundMetric): string {
   return metric === 'amount' ? fmtM(v) : metric === 'qty' ? fmtQty(v) : fmtPlt(v)
 }
 function metricUnitLabel(metric: InboundMetric): string {
-  return metric === 'amount' ? '백만원' : metric === 'qty' ? '개' : 'plt'
+  return metric === 'amount' ? '' : metric === 'qty' ? '개' : 'plt'
 }
 
 function toTrendData(allRows: InboundBrandDaily[], gran: Granularity, metric: InboundMetric) {
@@ -366,7 +366,7 @@ export default function InboundOverview({ period, metric, granularity = 'month' 
     ? fmtNum(Math.round(totalMetricVal))
     : metric === 'qty'
       ? fmtNum(totalMetricVal)
-      : totalMetricVal.toFixed(1)
+      : fmtM(totalMetricVal)
   const donutLine2 = metricUnitLabel(metric)
 
   const goToBrand  = (owner: string)   => navigate('/inbound/brand',  { state: { owner } })
@@ -481,7 +481,7 @@ export default function InboundOverview({ period, metric, granularity = 'month' 
         <CardHeader className="px-5 py-3.5 border-b border-border">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold">
-              {granLabel} 입고{metric === 'amount' ? '금액 (백만원)' : metric === 'qty' ? '수량' : '파렛트'} 추이
+              {granLabel} 입고{metric === 'amount' ? '금액' : metric === 'qty' ? '수량' : '파렛트'} 추이
             </CardTitle>
             <span className="text-xs text-muted-foreground">{trendScope}</span>
           </div>

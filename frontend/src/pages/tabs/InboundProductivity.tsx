@@ -57,7 +57,7 @@ export default function InboundProductivity({ period, metric, granularity = 'day
         <CardHeader className="px-5 py-3.5 border-b border-border">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold">
-              {granLabel} 브랜드별 입고실적 ({metricUnit(metric)})
+              {granLabel} 브랜드별 입고실적{metricUnit(metric) && ` (${metricUnit(metric)})`}
             </CardTitle>
             <span className="text-xs text-muted-foreground">{start} ~ {end}</span>
           </div>

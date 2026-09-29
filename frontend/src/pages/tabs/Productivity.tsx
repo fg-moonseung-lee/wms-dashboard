@@ -13,10 +13,10 @@ import type { Period } from '../../lib/types'
 import type { Metric } from './Overview'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartTooltip } from '@/components/ChartTooltip'
+import { fmtWon as fmtM } from '../../lib/format'
 
 interface Props { period: Period; metric: Metric; granularity: Granularity }
 
-const fmtM   = (v: number) => `${v.toFixed(1)}백만`
 const fmtBox = (v: number) => `${v.toLocaleString('ko-KR')}박스`
 const fmtNum = (v: number) => v.toLocaleString('ko-KR')
 
@@ -167,7 +167,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
   const pRows = rows.filter(r => r.work_date >= start && r.work_date <= end)
   const pWorkerRows = workerRows.filter(r => r.work_date >= start && r.work_date <= end)
   const isAmt = metric === 'amount'
-  const unit = isAmt ? '백만원' : '박스'
+  const unit = isAmt ? '' : '박스'
   const granLabel = granularity === 'day' ? '일별' : granularity === 'week' ? '주간' : '월간'
 
   /* 전체 KPI — 선택 기간 기준 */
@@ -210,7 +210,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
         <Card>
           <CardContent className="p-5">
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">
-              시간당 피킹 ({unit}/h)
+              시간당 피킹{unit ? ` (${unit}/h)` : ''}
             </p>
             <p className="text-2xl font-bold text-[#FF6B35]">
               {pickPerHrWms != null ? (isAmt ? fmtM(pickPerHrWms) : fmtBox(Math.round(pickPerHrWms))) : '-'}
@@ -237,7 +237,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
       </div>
 
       {/* 브랜드별 시간당 생산성 추이 — 전체 히스토리 */}
-      <SectionCard title={`브랜드별 시간당 생산성 ${granLabel} 추이 (${unit}/h)`} subtitle="WMS시간 기준">
+      <SectionCard title={`브랜드별 시간당 생산성 ${granLabel} 추이${unit ? ` (${unit}/h)` : ''}`} subtitle="WMS시간 기준">
         {pphTrendByOwner.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-gray-300 text-xs">데이터 없음</div>
         ) : (
@@ -247,7 +247,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} />
               <YAxis
                 tick={{ fontSize: 11, fill: '#6b7280' }}
-                tickFormatter={v => isAmt ? `${v}백만` : fmtNum(v)}
+                tickFormatter={v => isAmt ? fmtM(v) : fmtNum(v)}
               />
               <Tooltip
                 content={(props: any) => (
@@ -277,7 +277,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
       <div className="grid grid-cols-2 gap-5">
 
         {/* 구역별 시간당 생산성 수평 막대 — 선택 기간 기준 */}
-        <SectionCard title={`구역별 시간당 생산성 비교 (${unit}/h)`} subtitle="WMS시간 기준 · 높은 순">
+        <SectionCard title={`구역별 시간당 생산성 비교${unit ? ` (${unit}/h)` : ''}`} subtitle="WMS시간 기준 · 높은 순">
           {zonePphRows.length === 0 ? (
             <div className="flex items-center justify-center h-40 text-gray-300 text-xs">데이터 없음</div>
           ) : (
@@ -291,7 +291,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
                 <XAxis
                   type="number"
                   tick={{ fontSize: 10, fill: '#6b7280' }}
-                  tickFormatter={v => isAmt ? `${v}백만` : fmtNum(v)}
+                  tickFormatter={v => isAmt ? fmtM(v) : fmtNum(v)}
                 />
                 <YAxis
                   type="category" dataKey="zone"
@@ -319,7 +319,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
 
         {/* 브랜드별 시간당 피킹 — 그룹 바, 전체 히스토리 */}
         <SectionCard
-          title={`브랜드별 시간당 피킹 ${granLabel} 추이 (${unit}/h)`}
+          title={`브랜드별 시간당 피킹 ${granLabel} 추이${unit ? ` (${unit}/h)` : ''}`}
           subtitle="WMS시간 기준"
         >
           {pphTrend.length === 0 ? (
@@ -331,7 +331,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} />
                 <YAxis
                   tick={{ fontSize: 11, fill: '#6b7280' }}
-                  tickFormatter={v => isAmt ? `${v}백만` : fmtNum(v)}
+                  tickFormatter={v => isAmt ? fmtM(v) : fmtNum(v)}
                 />
                 <Tooltip
                   content={(props: any) => (
@@ -356,7 +356,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
       {/* 구역별 시간 기준별 생산성 비교 테이블 */}
       {zoneWms.length > 0 && (
         <SectionCard
-          title={`구역별 생산성 비교 (${unit}/h)`}
+          title={`구역별 생산성 비교${unit ? ` (${unit}/h)` : ''}`}
           subtitle="WMS · 근태 · 작업시간 기준"
         >
           <div className="overflow-x-auto">

@@ -1,8 +1,9 @@
 import type { InboundTypeKey } from './supabase'
 import type { InboundMetric } from '../pages/inbound/InboundLayout'
+import { fmtWon } from './format'
 
 /* ── 포맷터 ── */
-export const fmtM   = (v: number) => `${v.toFixed(1)}백만`
+export const fmtM   = fmtWon
 export const fmtQty = (v: number) => `${v.toLocaleString('ko-KR')}개`
 export const fmtPlt = (v: number) => `${v.toLocaleString('ko-KR')}plt`
 export const fmtNum = (v: number) => v.toLocaleString('ko-KR')
@@ -13,7 +14,7 @@ export function metricFmt(v: number, metric: InboundMetric): string {
   return metric === 'amount' ? fmtM(v) : metric === 'qty' ? fmtQty(v) : fmtPlt(v)
 }
 export function metricUnit(metric: InboundMetric): string {
-  return metric === 'amount' ? '백만원' : metric === 'qty' ? '개' : 'plt'
+  return metric === 'amount' ? '' : metric === 'qty' ? '개' : 'plt'
 }
 
 /* ── 집계 ── */

@@ -16,10 +16,10 @@ import type { Period } from '../../lib/types'
 import type { Metric } from './Overview'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartTooltip } from '@/components/ChartTooltip'
+import { fmtWon as fmtM } from '../../lib/format'
 
 interface Props { period: Period; metric: Metric; granularity: Granularity }
 
-const fmtM   = (v: number) => `${v.toFixed(1)}백만`
 const fmtBox = (v: number) => `${v.toLocaleString('ko-KR')}박스`
 const fmtNum = (v: number) => v.toLocaleString('ko-KR')
 
@@ -70,7 +70,7 @@ export default function CenterPage({ period, metric, granularity }: Props) {
   const pWorkerRows = workerRows.filter(r => r.work_date >= start && r.work_date <= end)
   const isAmt = metric === 'amount'
   const scale = metricScale(metric)
-  const unit = isAmt ? '백만원' : '박스'
+  const unit = isAmt ? '' : '박스'
   const granLabel = granularity === 'day' ? '일별' : granularity === 'week' ? '주간' : '월간'
 
   /* ── 센터별 KPI ── */
@@ -216,13 +216,13 @@ export default function CenterPage({ period, metric, granularity }: Props) {
 
         {/* 브랜드별 추이 */}
         {selTrendData.length > 0 && (
-          <SectionCard title={`${selectedCenter} 브랜드별 ${granLabel} 추이 (${unit})`}>
+          <SectionCard title={`${selectedCenter} 브랜드별 ${granLabel} 추이${unit ? ` (${unit})` : ''}`}>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={selTrendData} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} />
                 <YAxis tick={{ fontSize: 11, fill: '#6b7280' }}
-                  tickFormatter={v => isAmt ? `${v}백만` : fmtNum(v)} />
+                  tickFormatter={v => isAmt ? fmtM(v) : fmtNum(v)} />
                 <Tooltip content={(props: any) => (
                   <ChartTooltip active={props.active} payload={props.payload}
                     label={props.label} formatter={tooltipFmt} />
@@ -274,7 +274,7 @@ export default function CenterPage({ period, metric, granularity }: Props) {
       </div>
 
       {/* 센터별 실적 추이 */}
-      <SectionCard title={`센터별 피킹실적 ${granLabel} 추이 (${unit})`}>
+      <SectionCard title={`센터별 피킹실적 ${granLabel} 추이${unit ? ` (${unit})` : ''}`}>
         {trendData.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-gray-300 text-xs">데이터 없음</div>
         ) : (
@@ -284,7 +284,7 @@ export default function CenterPage({ period, metric, granularity }: Props) {
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} />
               <YAxis
                 tick={{ fontSize: 11, fill: '#6b7280' }}
-                tickFormatter={v => isAmt ? `${v}백만` : fmtNum(v)}
+                tickFormatter={v => isAmt ? fmtM(v) : fmtNum(v)}
               />
               <Tooltip
                 content={(props: any) => (
@@ -348,7 +348,7 @@ export default function CenterPage({ period, metric, granularity }: Props) {
         </SectionCard>
 
         {/* 1센터 브랜드 비중 추이 */}
-        <SectionCard title={`1센터 브랜드별 추이 (${unit})`} subtitle="퍼시스 · 일룸">
+        <SectionCard title={`1센터 브랜드별 추이${unit ? ` (${unit})` : ''}`} subtitle="퍼시스 · 일룸">
           {c1TrendData.length === 0 ? (
             <div className="flex items-center justify-center h-40 text-gray-300 text-xs">데이터 없음</div>
           ) : (
@@ -358,7 +358,7 @@ export default function CenterPage({ period, metric, granularity }: Props) {
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} />
                 <YAxis
                   tick={{ fontSize: 11, fill: '#6b7280' }}
-                  tickFormatter={v => isAmt ? `${v}백만` : fmtNum(v)}
+                  tickFormatter={v => isAmt ? fmtM(v) : fmtNum(v)}
                 />
                 <Tooltip
                   content={(props: any) => (
