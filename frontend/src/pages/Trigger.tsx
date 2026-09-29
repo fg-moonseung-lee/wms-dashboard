@@ -6,6 +6,7 @@ const SERVER_URL = 'http://localhost:8787'
 interface StatusResponse {
   job_id: string
   date: string
+  date_to: string | null
   status: 'running' | 'done' | 'error'
   returncode: number | null
   started_at: string
@@ -23,6 +24,10 @@ function fmtDateTime(iso: string | null): string {
   const hh = String(d.getHours()).padStart(2, '0')
   const mi = String(d.getMinutes()).padStart(2, '0')
   return `${mm}/${dd} ${hh}:${mi}`
+}
+
+function fmtDateRange(date: string, dateTo: string | null): string {
+  return dateTo && dateTo !== date ? `${date} ~ ${dateTo}` : date
 }
 
 function todayStr(): string {
@@ -43,7 +48,8 @@ function StatusBadge({ status }: { status: 'running' | 'done' | 'error' }) {
 }
 
 export default function Trigger() {
-  const [date, setDate] = useState(todayStr())
+  const [dateFrom, setDateFrom] = useState(todayStr())
+  const [dateTo, setDateTo] = useState(todayStr())
   const [serverUp, setServerUp] = useState<boolean | null>(null)
   const [checking, setChecking] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -99,6 +105,10 @@ export default function Trigger() {
   }, [selected?.log])
 
   async function viewJob(jobId: string) {
+    if (selectedIdRef.current === jobId) {
+      setSelected(null)
+      return
+    }
     try {
       const res = await fetch(`${SERVER_URL}/api/status?job_id=${jobId}`)
       if (!res.ok) return
@@ -130,11 +140,15 @@ export default function Trigger() {
 
   async function handleTrigger() {
     setErrorMsg(null)
+    if (dateTo < dateFrom) {
+      setErrorMsg('종료일은 시작일보다 빠를 수 없습니다.')
+      return
+    }
     try {
       const res = await fetch(`${SERVER_URL}/api/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date }),
+        body: JSON.stringify({ date: dateFrom, date_to: dateTo }),
       })
       const data = await res.json()
       if (res.status === 409) {
@@ -148,7 +162,7 @@ export default function Trigger() {
       const jobId = data.job_id as string
       setActiveJobId(jobId)
       setSelected({
-        job_id: jobId, date, status: 'running',
+        job_id: jobId, date: dateFrom, date_to: dateTo, status: 'running',
         returncode: null, started_at: new Date().toISOString(), finished_at: null, log: [],
       })
       loadHistory()
@@ -167,9 +181,17 @@ export default function Trigger() {
         <CardContent className="p-5">
           <div className="flex flex-wrap items-end gap-4">
             <div>
-              <label className="text-[10px] text-gray-400 block mb-1">집계 대상 날짜</label>
+              <label className="text-[10px] text-gray-400 block mb-1">집계 대상 날짜 (From)</label>
               <input
-                type="date" value={date} onChange={e => setDate(e.target.value)}
+                type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                disabled={activeJobId !== null}
+                className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-letusBlue disabled:opacity-50"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-400 block mb-1">To</label>
+              <input
+                type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
                 disabled={activeJobId !== null}
                 className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-letusBlue disabled:opacity-50"
               />
@@ -183,8 +205,8 @@ export default function Trigger() {
             </button>
             {activeJobId && <span className="text-[12px] font-semibold text-blue-600">실행 중...</span>}
             <p className="text-[11px] text-gray-400 leading-relaxed ml-2 max-w-[480px]">
-              선택한 날짜의 피킹+입고 데이터를 다시 수집해 DB에 반영합니다. RPA 자동 스케줄은 꺼져
-              있으므로, 명절/휴무일 등으로 자동 집계가 안 된 날짜는 여기서 수동으로 실행하세요.
+              선택한 기간의 피킹+입고 데이터를 다시 수집해 DB에 반영합니다. RPA 자동 스케줄은 꺼져
+              있으므로, 휴무일 등으로 자동 집계가 안 된 날짜는 여기서 수동으로 실행하세요.
             </p>
           </div>
 
@@ -238,7 +260,7 @@ export default function Trigger() {
                       selected?.job_id === h.job_id ? 'bg-blue-50/60 hover:bg-blue-50/60' : ''
                     }`}
                   >
-                    <td className="py-2 px-5 font-semibold text-gray-700">{h.date}</td>
+                    <td className="py-2 px-5 font-semibold text-gray-700">{fmtDateRange(h.date, h.date_to)}</td>
                     <td className="py-2 px-3 text-gray-500">{fmtDateTime(h.started_at)}</td>
                     <td className="py-2 px-3 text-gray-500">{fmtDateTime(h.finished_at)}</td>
                     <td className="py-2 px-3"><StatusBadge status={h.status} /></td>
@@ -255,7 +277,7 @@ export default function Trigger() {
         <Card>
           <CardHeader className="px-5 py-3.5 border-b border-border">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-sm font-semibold">{selected.date} 실행 로그</CardTitle>
+              <CardTitle className="text-sm font-semibold">{fmtDateRange(selected.date, selected.date_to)} 실행 로그</CardTitle>
               <StatusBadge status={selected.status} />
             </div>
           </CardHeader>

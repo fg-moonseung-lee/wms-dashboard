@@ -38,6 +38,7 @@ WMS 데이터 수집 RPA (피킹 + 입고/이동)
 실행:
   python scripts/wms_rpa.py                     # 기본: 어제 날짜
   python scripts/wms_rpa.py --date 2026-07-04   # 특정 날짜
+  python scripts/wms_rpa.py --date 2026-07-01 --date-to 2026-07-04   # 날짜 범위(순차 처리)
   python scripts/wms_rpa.py --force             # 중복 실행 무시
   python scripts/wms_rpa.py --skip-inbound      # 입고/이동 다운로드 생략(피킹만)
 
@@ -601,6 +602,7 @@ def run_pipeline(target: date) -> bool:
 async def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--date",  help="집계 대상 날짜 YYYY-MM-DD (기본: 어제)")
+    ap.add_argument("--date-to", help="--date와 함께 사용 시 날짜 범위의 끝(포함, YYYY-MM-DD) — 여러 날짜를 순차 처리")
     ap.add_argument("--force", action="store_true", help="중복 실행 무시")
     ap.add_argument("--skip-inbound", action="store_true", help="입고/이동 다운로드 생략 (피킹만)")
     ap.add_argument("--skip-pipeline", action="store_true",
@@ -611,10 +613,22 @@ async def main():
     today_str = str(today)
 
     if args.date:
-        targets = [datetime.strptime(args.date, "%Y-%m-%d").date()]
-        if not args.force and already_ran(args.date):
-            print(f"[{args.date}] 이미 실행 완료. (--force 로 재실행)")
+        start = datetime.strptime(args.date, "%Y-%m-%d").date()
+        end = datetime.strptime(args.date_to, "%Y-%m-%d").date() if args.date_to else start
+        if end < start:
+            print("--date-to는 --date보다 빠를 수 없습니다.")
             return
+        all_dates = [start + timedelta(days=i) for i in range((end - start).days + 1)]
+        if args.force:
+            targets = all_dates
+        else:
+            targets = [d for d in all_dates if not already_ran(str(d))]
+            skipped = [d for d in all_dates if already_ran(str(d))]
+            if skipped:
+                print(f"이미 실행 완료(스킵): {', '.join(str(d) for d in skipped)} (--force 로 재실행)")
+            if not targets:
+                print("처리할 날짜 없음 (모두 이미 실행 완료).")
+                return
     else:
         targets, wait_until = pending_targets(today)
         if not targets:

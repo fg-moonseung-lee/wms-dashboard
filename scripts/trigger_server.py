@@ -114,8 +114,10 @@ def _save_history() -> None:
 _load_history()
 
 
-def _run_job(job_id: str, target_date: str):
-    cmd = [sys.executable, str(BASE_DIR / "scripts" / "wms_rpa.py"), "--date", target_date, "--force"]
+def _run_job(job_id: str, date_from: str, date_to: str | None):
+    cmd = [sys.executable, str(BASE_DIR / "scripts" / "wms_rpa.py"), "--date", date_from, "--force"]
+    if date_to and date_to != date_from:
+        cmd += ["--date-to", date_to]
     proc = subprocess.Popen(
         cmd, cwd=str(BASE_DIR),
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -139,15 +141,20 @@ def _run_job(job_id: str, target_date: str):
 
 
 class TriggerRequest(BaseModel):
-    date: str  # YYYY-MM-DD
+    date: str  # YYYY-MM-DD (범위의 시작)
+    date_to: str | None = None  # YYYY-MM-DD (범위의 끝, 포함) — 미지정 시 date와 동일(단일일)
 
 
 @app.post("/api/trigger")
 def trigger(req: TriggerRequest):
     try:
         datetime.strptime(req.date, "%Y-%m-%d")
+        if req.date_to:
+            datetime.strptime(req.date_to, "%Y-%m-%d")
     except ValueError:
         return JSONResponse({"error": "date는 YYYY-MM-DD 형식이어야 합니다."}, status_code=400)
+    if req.date_to and req.date_to < req.date:
+        return JSONResponse({"error": "종료일은 시작일보다 빠를 수 없습니다."}, status_code=400)
 
     with _lock:
         running = next((j for j in _jobs.values() if j["status"] == "running"), None)
@@ -160,6 +167,7 @@ def trigger(req: TriggerRequest):
         _jobs[job_id] = {
             "job_id": job_id,
             "date": req.date,
+            "date_to": req.date_to,
             "status": "running",
             "returncode": None,
             "started_at": datetime.now().isoformat(),
@@ -168,7 +176,7 @@ def trigger(req: TriggerRequest):
         }
         _save_history()
 
-    threading.Thread(target=_run_job, args=(job_id, req.date), daemon=True).start()
+    threading.Thread(target=_run_job, args=(job_id, req.date, req.date_to), daemon=True).start()
     return {"job_id": job_id}
 
 
@@ -181,6 +189,7 @@ def status(job_id: str | None = None):
         return {
             "job_id": job["job_id"],
             "date": job["date"],
+            "date_to": job.get("date_to"),
             "status": job["status"],
             "returncode": job["returncode"],
             "started_at": job["started_at"],
