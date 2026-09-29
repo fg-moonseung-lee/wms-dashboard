@@ -28,7 +28,6 @@ import subprocess
 import sys
 import threading
 import uuid
-from collections import deque
 from datetime import datetime
 from pathlib import Path
 
@@ -44,6 +43,9 @@ if sys.platform == "win32":
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BASE_DIR / ".env")
+
+HISTORY_PATH = BASE_DIR / "data" / "trigger_history.json"
+HISTORY_MAX_ENTRIES = 100
 
 HOST = "127.0.0.1"
 PORT = 8787
@@ -82,14 +84,37 @@ async def cors_and_pna(request: Request, call_next):
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 단일 job 상태 (동시 실행 방지)
+# job 이력 (동시 실행 방지 + 디스크 영속화로 서버 재시작 후에도 이력 유지)
 # ─────────────────────────────────────────────────────────────────────
 _lock = threading.Lock()
-_job: dict | None = None
+_jobs: dict[str, dict] = {}
+
+
+def _job_summary(job: dict) -> dict:
+    return {k: v for k, v in job.items() if k != "log"}
+
+
+def _load_history() -> None:
+    if not HISTORY_PATH.exists():
+        return
+    try:
+        records = json.loads(HISTORY_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return
+    for rec in records:
+        _jobs[rec["job_id"]] = rec
+
+
+def _save_history() -> None:
+    records = sorted(_jobs.values(), key=lambda j: j["started_at"], reverse=True)[:HISTORY_MAX_ENTRIES]
+    HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    HISTORY_PATH.write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+_load_history()
 
 
 def _run_job(job_id: str, target_date: str):
-    global _job
     cmd = [sys.executable, str(BASE_DIR / "scripts" / "wms_rpa.py"), "--date", target_date, "--force"]
     proc = subprocess.Popen(
         cmd, cwd=str(BASE_DIR),
@@ -98,14 +123,19 @@ def _run_job(job_id: str, target_date: str):
     )
     for line in proc.stdout:
         with _lock:
-            if _job and _job["job_id"] == job_id:
-                _job["log"].append(line.rstrip("\n"))
+            job = _jobs.get(job_id)
+            if job:
+                job["log"].append(line.rstrip("\n"))
+                if len(job["log"]) > 500:
+                    del job["log"][0]
     proc.wait()
     with _lock:
-        if _job and _job["job_id"] == job_id:
-            _job["status"] = "done" if proc.returncode == 0 else "error"
-            _job["returncode"] = proc.returncode
-            _job["finished_at"] = datetime.now().isoformat()
+        job = _jobs.get(job_id)
+        if job:
+            job["status"] = "done" if proc.returncode == 0 else "error"
+            job["returncode"] = proc.returncode
+            job["finished_at"] = datetime.now().isoformat()
+            _save_history()
 
 
 class TriggerRequest(BaseModel):
@@ -114,28 +144,29 @@ class TriggerRequest(BaseModel):
 
 @app.post("/api/trigger")
 def trigger(req: TriggerRequest):
-    global _job
     try:
         datetime.strptime(req.date, "%Y-%m-%d")
     except ValueError:
         return JSONResponse({"error": "date는 YYYY-MM-DD 형식이어야 합니다."}, status_code=400)
 
     with _lock:
-        if _job is not None and _job["status"] == "running":
+        running = next((j for j in _jobs.values() if j["status"] == "running"), None)
+        if running is not None:
             return JSONResponse(
-                {"error": "이미 실행 중인 집계 작업이 있습니다.", "job_id": _job["job_id"]},
+                {"error": "이미 실행 중인 집계 작업이 있습니다.", "job_id": running["job_id"]},
                 status_code=409,
             )
         job_id = uuid.uuid4().hex
-        _job = {
+        _jobs[job_id] = {
             "job_id": job_id,
             "date": req.date,
             "status": "running",
             "returncode": None,
             "started_at": datetime.now().isoformat(),
             "finished_at": None,
-            "log": deque(maxlen=500),
+            "log": [],
         }
+        _save_history()
 
     threading.Thread(target=_run_job, args=(job_id, req.date), daemon=True).start()
     return {"job_id": job_id}
@@ -144,17 +175,25 @@ def trigger(req: TriggerRequest):
 @app.get("/api/status")
 def status(job_id: str | None = None):
     with _lock:
-        if _job is None or (job_id and _job["job_id"] != job_id):
+        job = _jobs.get(job_id) if job_id else None
+        if job is None:
             return JSONResponse({"error": "해당 job을 찾을 수 없습니다."}, status_code=404)
         return {
-            "job_id": _job["job_id"],
-            "date": _job["date"],
-            "status": _job["status"],
-            "returncode": _job["returncode"],
-            "started_at": _job["started_at"],
-            "finished_at": _job["finished_at"],
-            "log": list(_job["log"]),
+            "job_id": job["job_id"],
+            "date": job["date"],
+            "status": job["status"],
+            "returncode": job["returncode"],
+            "started_at": job["started_at"],
+            "finished_at": job["finished_at"],
+            "log": list(job["log"])[-500:],
         }
+
+
+@app.get("/api/history")
+def history(limit: int = 30):
+    with _lock:
+        records = sorted(_jobs.values(), key=lambda j: j["started_at"], reverse=True)[:limit]
+        return [_job_summary(r) for r in records]
 
 
 @app.get("/api/health")

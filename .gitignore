@@ -34,3 +34,4 @@ Thumbs.db
 data/master/
 data/temp/
 data/reports/
+data/trigger_history.json
