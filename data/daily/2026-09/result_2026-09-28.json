@@ -1,0 +1,54 @@
+{
+  "H-I": {
+    "pick_box": 943.0,
+    "pick_amount": 115026850.0
+  },
+  "C-D": {
+    "pick_box": 2529.0,
+    "pick_amount": 116525540.0
+  },
+  "A-P": {
+    "pick_box": 1584.0,
+    "pick_amount": 154192320.0
+  },
+  "DPS": {
+    "pick_box": 1973.0,
+    "pick_amount": 22296700.0
+  },
+  "E-F": {
+    "pick_box": 3025.0,
+    "pick_amount": 154721500.0
+  },
+  "J-K": {
+    "pick_box": 2163.0,
+    "pick_amount": 171646100.0
+  },
+  "L": {
+    "pick_box": 572.0,
+    "pick_amount": 101497411.0
+  },
+  "B": {
+    "pick_box": 262.0,
+    "pick_amount": 86441000.0
+  },
+  "L/S": {
+    "pick_box": 720.0,
+    "pick_amount": 11931400.0
+  },
+  "M-N": {
+    "pick_box": 2571.0,
+    "pick_amount": 155830300.0
+  },
+  "S": {
+    "pick_box": 2332.0,
+    "pick_amount": 38955420.0
+  },
+  "W": {
+    "pick_box": 684.0,
+    "pick_amount": 178884945.0
+  },
+  "R": {
+    "pick_box": 198.0,
+    "pick_amount": 64817008.0
+  }
+}
