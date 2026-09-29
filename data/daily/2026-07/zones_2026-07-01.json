@@ -4,142 +4,129 @@
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "H-I",
-    "std_time_hr": 19.24155,
-    "act_time_hr": 34.522656,
     "pick_amount": 158847710.0,
     "pick_box": 1384,
-    "wms_time_hr": 54.4406
+    "wave_time_hr": 33.7438,
+    "wms_time_hr": 61.0616
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "C-D",
-    "std_time_hr": 34.172431,
-    "act_time_hr": 57.713281,
     "pick_amount": 136980027.0,
     "pick_box": 3125,
-    "wms_time_hr": 82.2353
+    "wave_time_hr": 51.9036,
+    "wms_time_hr": 75.1386
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "A-P",
-    "std_time_hr": 20.975778,
-    "act_time_hr": 37.072767,
     "pick_amount": 174277710.0,
     "pick_box": 1628,
-    "wms_time_hr": 65.1086
+    "wave_time_hr": 34.9471,
+    "wms_time_hr": 95.5378
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "DPS",
-    "std_time_hr": 43.030167,
-    "act_time_hr": 41.120278,
     "pick_amount": 19680200.0,
     "pick_box": 1457,
-    "wms_time_hr": 0.0073
+    "wave_time_hr": 0.0,
+    "wms_time_hr": 6.3092
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "퍼시스",
     "zone": "E-F",
-    "std_time_hr": 11.800722,
-    "act_time_hr": 18.438989,
     "pick_amount": 93879000.0,
     "pick_box": 2125,
-    "wms_time_hr": 44.5447
+    "wave_time_hr": 15.6378,
+    "wms_time_hr": 36.5754
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "퍼시스",
     "zone": "J-K",
-    "std_time_hr": 11.194111,
-    "act_time_hr": 18.376736,
     "pick_amount": 107736800.0,
     "pick_box": 1637,
-    "wms_time_hr": 46.1847
+    "wave_time_hr": 12.7047,
+    "wms_time_hr": 36.4672
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "퍼시스",
     "zone": "L",
-    "std_time_hr": 5.152153,
-    "act_time_hr": 6.162597,
     "pick_amount": 74934030.0,
     "pick_box": 444,
-    "wms_time_hr": 12.3517
+    "wave_time_hr": 3.1856,
+    "wms_time_hr": 16.7771
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "퍼시스",
     "zone": "B",
-    "std_time_hr": 2.707378,
-    "act_time_hr": 2.401428,
     "pick_amount": 77075000.0,
     "pick_box": 249,
-    "wms_time_hr": 9.9572
+    "wave_time_hr": 0.5154,
+    "wms_time_hr": 7.2216
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "퍼시스",
     "zone": "L/S",
-    "std_time_hr": 3.894028,
-    "act_time_hr": 3.846889,
     "pick_amount": 7816000.0,
     "pick_box": 513,
-    "wms_time_hr": 5.8033
+    "wave_time_hr": 1.6263,
+    "wms_time_hr": 7.0094
   },
   {
     "work_date": "2026-07-01",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "M-N",
-    "std_time_hr": 29.897767,
-    "act_time_hr": 55.105122,
-    "pick_amount": 208664700.0,
-    "pick_box": 3354,
-    "wms_time_hr": 81.3303
+    "pick_amount": 206882400.0,
+    "pick_box": 3297,
+    "wave_time_hr": 48.3921,
+    "wms_time_hr": 71.4368
   },
   {
     "work_date": "2026-07-01",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "S",
-    "std_time_hr": 13.016097,
-    "act_time_hr": 9.606542,
-    "pick_amount": 23808380.0,
-    "pick_box": 1563,
-    "wms_time_hr": 18.9189
+    "pick_amount": 12868780.0,
+    "pick_box": 801,
+    "wave_time_hr": 2.6762,
+    "wms_time_hr": 11.0445
   },
   {
     "work_date": "2026-07-01",
     "center": "양지3센터",
     "owner": "3PL",
     "zone": "W",
-    "std_time_hr": 5.595925,
-    "act_time_hr": 6.557153,
     "pick_amount": 74266408.0,
     "pick_box": 361,
-    "wms_time_hr": 13.4714
+    "wave_time_hr": 6.3187,
+    "wms_time_hr": 19.9837
   },
   {
     "work_date": "2026-07-01",
     "center": "양지3센터",
     "owner": "3PL",
     "zone": "R",
-    "std_time_hr": 10.213292,
-    "act_time_hr": 11.020653,
     "pick_amount": 109458794.0,
     "pick_box": 353,
-    "wms_time_hr": 23.8578
+    "wave_time_hr": 6.1783,
+    "wms_time_hr": 29.3123
   }
 ]

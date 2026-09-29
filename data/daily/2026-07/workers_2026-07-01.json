@@ -4,26 +4,12 @@
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "H-I",
-    "worker_name": "[야간]박현일",
-    "shift": "야간",
-    "std_time_hr": 1.740867,
-    "act_time_hr": 3.584911,
-    "pick_amount": 11383800.0,
-    "pick_box": 109,
-    "wms_time_hr": 5.7758
-  },
-  {
-    "work_date": "2026-07-01",
-    "center": "양지1센터",
-    "owner": "일룸",
-    "zone": "H-I",
     "worker_name": "[야간]윤길제",
     "shift": "야간",
-    "std_time_hr": 2.319356,
-    "act_time_hr": 4.847911,
     "pick_amount": 24529500.0,
     "pick_box": 230,
-    "wms_time_hr": 7.1503
+    "wave_time_hr": 5.049961,
+    "wms_time_hr": 9.078286
   },
   {
     "work_date": "2026-07-01",
@@ -32,11 +18,22 @@
     "zone": "H-I",
     "worker_name": "[야간]이경환",
     "shift": "야간",
-    "std_time_hr": 2.846367,
-    "act_time_hr": 4.979156,
     "pick_amount": 19985790.0,
     "pick_box": 212,
-    "wms_time_hr": 7.4614
+    "wave_time_hr": 5.615534,
+    "wms_time_hr": 9.221672
+  },
+  {
+    "work_date": "2026-07-01",
+    "center": "양지1센터",
+    "owner": "일룸",
+    "zone": "H-I",
+    "worker_name": "[야간]이석진",
+    "shift": "야간",
+    "pick_amount": 11383800.0,
+    "pick_box": 109,
+    "wave_time_hr": 3.194491,
+    "wms_time_hr": 6.476583
   },
   {
     "work_date": "2026-07-01",
@@ -45,11 +42,10 @@
     "zone": "H-I",
     "worker_name": "[야간]이재형",
     "shift": "야간",
-    "std_time_hr": 1.936967,
-    "act_time_hr": 2.792633,
     "pick_amount": 17597240.0,
     "pick_box": 137,
-    "wms_time_hr": 7.4642
+    "wave_time_hr": 1.789784,
+    "wms_time_hr": 7.027861
   },
   {
     "work_date": "2026-07-01",
@@ -58,11 +54,10 @@
     "zone": "H-I",
     "worker_name": "[야간]장광일",
     "shift": "야간",
-    "std_time_hr": 2.9742,
-    "act_time_hr": 5.488572,
     "pick_amount": 23851700.0,
     "pick_box": 236,
-    "wms_time_hr": 6.8081
+    "wave_time_hr": 6.028605,
+    "wms_time_hr": 9.042817
   },
   {
     "work_date": "2026-07-01",
@@ -71,89 +66,82 @@
     "zone": "H-I",
     "worker_name": "[야간]하동훈",
     "shift": "야간",
-    "std_time_hr": 1.738628,
-    "act_time_hr": 3.375717,
     "pick_amount": 16736110.0,
     "pick_box": 141,
-    "wms_time_hr": 5.0711
+    "wave_time_hr": 3.281957,
+    "wms_time_hr": 5.108915
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "H-I",
-    "worker_name": "㈜[주간]고홍길",
+    "worker_name": "[주간]고홍길",
     "shift": "주간",
-    "std_time_hr": 2.622628,
-    "act_time_hr": 4.062672,
     "pick_amount": 19569020.0,
     "pick_box": 119,
-    "wms_time_hr": 6.8117
+    "wave_time_hr": 3.065578,
+    "wms_time_hr": 6.314994
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "H-I",
-    "worker_name": "㈜[주간]박준석",
+    "worker_name": "[주간]박준석",
     "shift": "주간",
-    "std_time_hr": 0.193567,
-    "act_time_hr": 0.250478,
     "pick_amount": 2555300.0,
     "pick_box": 12,
-    "wms_time_hr": 0.5522
+    "wave_time_hr": 0.20943,
+    "wms_time_hr": 0.614349
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "H-I",
-    "worker_name": "㈜[주간]이강민",
+    "worker_name": "[주간]이강민",
     "shift": "주간",
-    "std_time_hr": 0.275622,
-    "act_time_hr": 0.423272,
     "pick_amount": 2521700.0,
     "pick_box": 15,
-    "wms_time_hr": 0.5208
+    "wave_time_hr": 0.317428,
+    "wms_time_hr": 0.568132
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "H-I",
-    "worker_name": "㈜[주간]이봉진",
+    "worker_name": "[주간]이봉진",
     "shift": "주간",
-    "std_time_hr": 0.111372,
-    "act_time_hr": 0.606428,
     "pick_amount": 3036900.0,
     "pick_box": 7,
-    "wms_time_hr": 1.06
+    "wave_time_hr": 0.670969,
+    "wms_time_hr": 1.201462
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "H-I",
-    "worker_name": "㈜[주간]이진옥",
+    "worker_name": "[주간]이진옥",
     "shift": "주간",
-    "std_time_hr": 2.205017,
-    "act_time_hr": 3.876744,
     "pick_amount": 14824750.0,
     "pick_box": 161,
-    "wms_time_hr": 5.5544
+    "wave_time_hr": 4.376896,
+    "wms_time_hr": 6.140738
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "H-I",
-    "worker_name": "㈜[주간]한정흠",
+    "worker_name": "[주간]한정흠",
     "shift": "주간",
-    "std_time_hr": 0.276961,
-    "act_time_hr": 0.234161,
     "pick_amount": 2255900.0,
     "pick_box": 5,
-    "wms_time_hr": 0.2106
+    "wave_time_hr": 0.143201,
+    "wms_time_hr": 0.265805
   },
   {
     "work_date": "2026-07-01",
@@ -162,11 +150,10 @@
     "zone": "C-D",
     "worker_name": "[야간]고태선",
     "shift": "야간",
-    "std_time_hr": 2.018483,
-    "act_time_hr": 5.541533,
     "pick_amount": 8885960.0,
     "pick_box": 196,
-    "wms_time_hr": 5.7481
+    "wave_time_hr": 5.390321,
+    "wms_time_hr": 4.748144
   },
   {
     "work_date": "2026-07-01",
@@ -175,11 +162,10 @@
     "zone": "C-D",
     "worker_name": "[야간]김기태",
     "shift": "야간",
-    "std_time_hr": 2.589567,
-    "act_time_hr": 5.502744,
     "pick_amount": 10787470.0,
     "pick_box": 246,
-    "wms_time_hr": 8.7831
+    "wave_time_hr": 5.036248,
+    "wms_time_hr": 7.783111
   },
   {
     "work_date": "2026-07-01",
@@ -188,11 +174,10 @@
     "zone": "C-D",
     "worker_name": "[야간]김민균",
     "shift": "야간",
-    "std_time_hr": 1.765872,
-    "act_time_hr": 4.2243,
     "pick_amount": 6078880.0,
     "pick_box": 141,
-    "wms_time_hr": 4.2067
+    "wave_time_hr": 4.096613,
+    "wms_time_hr": 3.206505
   },
   {
     "work_date": "2026-07-01",
@@ -201,11 +186,10 @@
     "zone": "C-D",
     "worker_name": "[야간]김수환",
     "shift": "야간",
-    "std_time_hr": 2.298411,
-    "act_time_hr": 4.072283,
     "pick_amount": 8413400.0,
     "pick_box": 217,
-    "wms_time_hr": 8.6928
+    "wave_time_hr": 3.483294,
+    "wms_time_hr": 7.692715
   },
   {
     "work_date": "2026-07-01",
@@ -214,11 +198,10 @@
     "zone": "C-D",
     "worker_name": "[야간]김정혁",
     "shift": "야간",
-    "std_time_hr": 5.17225,
-    "act_time_hr": 6.699311,
     "pick_amount": 20104050.0,
     "pick_box": 465,
-    "wms_time_hr": 10.2981
+    "wave_time_hr": 5.893913,
+    "wms_time_hr": 9.298041
   },
   {
     "work_date": "2026-07-01",
@@ -227,11 +210,10 @@
     "zone": "C-D",
     "worker_name": "[야간]김정현",
     "shift": "야간",
-    "std_time_hr": 0.465267,
-    "act_time_hr": 0.651372,
     "pick_amount": 2556900.0,
     "pick_box": 49,
-    "wms_time_hr": 0.6064
+    "wave_time_hr": 0.606413,
+    "wms_time_hr": 0.606413
   },
   {
     "work_date": "2026-07-01",
@@ -240,11 +222,10 @@
     "zone": "C-D",
     "worker_name": "[야간]김태석",
     "shift": "야간",
-    "std_time_hr": 4.240111,
-    "act_time_hr": 7.285739,
     "pick_amount": 18541660.0,
     "pick_box": 440,
-    "wms_time_hr": 9.5844
+    "wave_time_hr": 6.858376,
+    "wms_time_hr": 8.584341
   },
   {
     "work_date": "2026-07-01",
@@ -253,11 +234,10 @@
     "zone": "C-D",
     "worker_name": "[야간]이강민(야)",
     "shift": "야간",
-    "std_time_hr": 0.843056,
-    "act_time_hr": 1.02375,
     "pick_amount": 1550400.0,
     "pick_box": 50,
-    "wms_time_hr": 0.8003
+    "wave_time_hr": 0.42773,
+    "wms_time_hr": 2.235749
   },
   {
     "work_date": "2026-07-01",
@@ -266,11 +246,10 @@
     "zone": "C-D",
     "worker_name": "[야간]전상운",
     "shift": "야간",
-    "std_time_hr": 2.694589,
-    "act_time_hr": 5.48405,
     "pick_amount": 21110370.0,
     "pick_box": 428,
-    "wms_time_hr": 6.2894
+    "wave_time_hr": 4.994474,
+    "wms_time_hr": 5.28933
   },
   {
     "work_date": "2026-07-01",
@@ -279,76 +258,70 @@
     "zone": "C-D",
     "worker_name": "[야간]정성우",
     "shift": "야간",
-    "std_time_hr": 2.047672,
-    "act_time_hr": 4.33035,
     "pick_amount": 8447100.0,
     "pick_box": 183,
-    "wms_time_hr": 4.4619
+    "wave_time_hr": 4.184997,
+    "wms_time_hr": 3.461915
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "C-D",
-    "worker_name": "㈜[주간]박준석",
+    "worker_name": "[주간]박준석",
     "shift": "주간",
-    "std_time_hr": 3.367911,
-    "act_time_hr": 4.679089,
     "pick_amount": 10814070.0,
     "pick_box": 232,
-    "wms_time_hr": 5.9228
+    "wave_time_hr": 4.563123,
+    "wms_time_hr": 6.494299
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "C-D",
-    "worker_name": "㈜[주간]송흥준",
+    "worker_name": "[주간]방제하",
     "shift": "주간",
-    "std_time_hr": 2.786628,
-    "act_time_hr": 3.760133,
-    "pick_amount": 8790700.0,
-    "pick_box": 224,
-    "wms_time_hr": 7.4447
-  },
-  {
-    "work_date": "2026-07-01",
-    "center": "양지1센터",
-    "owner": "일룸",
-    "zone": "C-D",
-    "worker_name": "㈜[주간]어건",
-    "shift": "주간",
-    "std_time_hr": 0.088331,
-    "act_time_hr": 0.088331,
     "pick_amount": 40100.0,
     "pick_box": 1,
-    "wms_time_hr": null
+    "wave_time_hr": 0.022249,
+    "wms_time_hr": 0.0
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "C-D",
-    "worker_name": "㈜[주간]이봉진",
+    "worker_name": "[주간]송흥준",
     "shift": "주간",
-    "std_time_hr": 0.403461,
-    "act_time_hr": 0.362017,
+    "pick_amount": 8790700.0,
+    "pick_box": 224,
+    "wave_time_hr": 3.032116,
+    "wms_time_hr": 6.444818
+  },
+  {
+    "work_date": "2026-07-01",
+    "center": "양지1센터",
+    "owner": "일룸",
+    "zone": "C-D",
+    "worker_name": "[주간]이봉진",
+    "shift": "주간",
     "pick_amount": 860000.0,
     "pick_box": 19,
-    "wms_time_hr": 3.0764
+    "wave_time_hr": 0.177366,
+    "wms_time_hr": 3.139396
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "C-D",
-    "worker_name": "㈜[주간]장지수",
+    "worker_name": "[주간]장지수",
     "shift": "주간",
-    "std_time_hr": 3.390822,
-    "act_time_hr": 4.008278,
     "pick_amount": 9998967.0,
     "pick_box": 234,
-    "wms_time_hr": 6.3203
+    "wave_time_hr": 3.136388,
+    "wms_time_hr": 6.153779
   },
   {
     "work_date": "2026-07-01",
@@ -357,11 +330,10 @@
     "zone": "A-P",
     "worker_name": "[야간]김민균",
     "shift": "야간",
-    "std_time_hr": 0.119856,
-    "act_time_hr": 0.261817,
     "pick_amount": 550300.0,
     "pick_box": 7,
-    "wms_time_hr": 1.0183
+    "wave_time_hr": 0.212225,
+    "wms_time_hr": 0.212225
   },
   {
     "work_date": "2026-07-01",
@@ -370,24 +342,10 @@
     "zone": "A-P",
     "worker_name": "[야간]박경철",
     "shift": "야간",
-    "std_time_hr": 1.941811,
-    "act_time_hr": 4.248839,
     "pick_amount": 15530480.0,
     "pick_box": 228,
-    "wms_time_hr": 4.4769
-  },
-  {
-    "work_date": "2026-07-01",
-    "center": "양지1센터",
-    "owner": "일룸",
-    "zone": "A-P",
-    "worker_name": "[야간]박현일",
-    "shift": "야간",
-    "std_time_hr": 0.532856,
-    "act_time_hr": 0.903606,
-    "pick_amount": 7829920.0,
-    "pick_box": 21,
-    "wms_time_hr": 1.7008
+    "wave_time_hr": 3.998803,
+    "wms_time_hr": 3.476931
   },
   {
     "work_date": "2026-07-01",
@@ -396,11 +354,10 @@
     "zone": "A-P",
     "worker_name": "[야간]신주철",
     "shift": "야간",
-    "std_time_hr": 2.758722,
-    "act_time_hr": 4.763211,
     "pick_amount": 17478450.0,
     "pick_box": 230,
-    "wms_time_hr": 8.9214
+    "wave_time_hr": 4.360762,
+    "wms_time_hr": 7.921273
   },
   {
     "work_date": "2026-07-01",
@@ -409,11 +366,10 @@
     "zone": "A-P",
     "worker_name": "[야간]신현석",
     "shift": "야간",
-    "std_time_hr": 2.664367,
-    "act_time_hr": 5.066344,
     "pick_amount": 17183600.0,
     "pick_box": 213,
-    "wms_time_hr": 5.9503
+    "wave_time_hr": 4.474853,
+    "wms_time_hr": 4.950173
   },
   {
     "work_date": "2026-07-01",
@@ -422,11 +378,10 @@
     "zone": "A-P",
     "worker_name": "[야간]심인보",
     "shift": "야간",
-    "std_time_hr": 1.901506,
-    "act_time_hr": 5.116278,
     "pick_amount": 12886180.0,
     "pick_box": 168,
-    "wms_time_hr": 6.07
+    "wave_time_hr": 4.931083,
+    "wms_time_hr": 5.070059
   },
   {
     "work_date": "2026-07-01",
@@ -435,11 +390,10 @@
     "zone": "A-P",
     "worker_name": "[야간]엄희용",
     "shift": "야간",
-    "std_time_hr": 2.273589,
-    "act_time_hr": 4.231972,
     "pick_amount": 18209760.0,
     "pick_box": 198,
-    "wms_time_hr": 6.0594
+    "wave_time_hr": 3.773149,
+    "wms_time_hr": 5.059484
   },
   {
     "work_date": "2026-07-01",
@@ -448,11 +402,10 @@
     "zone": "A-P",
     "worker_name": "[야간]윤길제",
     "shift": "야간",
-    "std_time_hr": 0.739161,
-    "act_time_hr": 1.181783,
     "pick_amount": 10470500.0,
     "pick_box": 29,
-    "wms_time_hr": 0.9281
+    "wave_time_hr": 0.30501,
+    "wms_time_hr": 7.721692
   },
   {
     "work_date": "2026-07-01",
@@ -461,11 +414,10 @@
     "zone": "A-P",
     "worker_name": "[야간]이강민(야)",
     "shift": "야간",
-    "std_time_hr": 2.307544,
-    "act_time_hr": 3.342211,
     "pick_amount": 12952730.0,
     "pick_box": 159,
-    "wms_time_hr": 6.2461
+    "wave_time_hr": 2.704172,
+    "wms_time_hr": 6.046188
   },
   {
     "work_date": "2026-07-01",
@@ -474,11 +426,22 @@
     "zone": "A-P",
     "worker_name": "[야간]이경환",
     "shift": "야간",
-    "std_time_hr": 0.158706,
-    "act_time_hr": 0.230928,
     "pick_amount": 7464350.0,
     "pick_box": 22,
-    "wms_time_hr": 0.7603
+    "wave_time_hr": 1.211729,
+    "wms_time_hr": 7.818236
+  },
+  {
+    "work_date": "2026-07-01",
+    "center": "양지1센터",
+    "owner": "일룸",
+    "zone": "A-P",
+    "worker_name": "[야간]이석진",
+    "shift": "야간",
+    "pick_amount": 7829920.0,
+    "pick_box": 21,
+    "wave_time_hr": 1.796249,
+    "wms_time_hr": 6.105405
   },
   {
     "work_date": "2026-07-01",
@@ -487,11 +450,10 @@
     "zone": "A-P",
     "worker_name": "[야간]이재형",
     "shift": "야간",
-    "std_time_hr": 0.108361,
-    "act_time_hr": 0.095606,
     "pick_amount": 6029200.0,
     "pick_box": 20,
-    "wms_time_hr": 0.5636
+    "wave_time_hr": 0.10891,
+    "wms_time_hr": 1.610526
   },
   {
     "work_date": "2026-07-01",
@@ -500,11 +462,10 @@
     "zone": "A-P",
     "worker_name": "[야간]장광일",
     "shift": "야간",
-    "std_time_hr": 0.0,
-    "act_time_hr": 0.0,
     "pick_amount": 6759300.0,
     "pick_box": 22,
-    "wms_time_hr": 1.2347
+    "wave_time_hr": 1.432255,
+    "wms_time_hr": 6.455087
   },
   {
     "work_date": "2026-07-01",
@@ -513,128 +474,118 @@
     "zone": "A-P",
     "worker_name": "[야간]하동훈",
     "shift": "야간",
-    "std_time_hr": 0.282406,
-    "act_time_hr": 0.207122,
     "pick_amount": 5877800.0,
     "pick_box": 17,
-    "wms_time_hr": 1.0525
+    "wave_time_hr": 0.768823,
+    "wms_time_hr": 4.489268
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "A-P",
-    "worker_name": "㈜[주간]고홍길",
+    "worker_name": "[주간]고홍길",
     "shift": "주간",
-    "std_time_hr": 0.080272,
-    "act_time_hr": 0.080272,
     "pick_amount": 3976500.0,
     "pick_box": 12,
-    "wms_time_hr": 0.5033
+    "wave_time_hr": 0.078324,
+    "wms_time_hr": 4.135506
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "A-P",
-    "worker_name": "㈜[주간]박준석",
+    "worker_name": "[주간]박준석",
     "shift": "주간",
-    "std_time_hr": 0.112972,
-    "act_time_hr": 0.261456,
     "pick_amount": 2357100.0,
     "pick_box": 4,
-    "wms_time_hr": 0.1861
+    "wave_time_hr": 0.096033,
+    "wms_time_hr": 0.381277
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "A-P",
-    "worker_name": "㈜[주간]이강민",
+    "worker_name": "[주간]이강민",
     "shift": "주간",
-    "std_time_hr": 0.0,
-    "act_time_hr": 0.0,
     "pick_amount": 400000.0,
     "pick_box": 1,
-    "wms_time_hr": 0.0475
+    "wave_time_hr": 0.027439,
+    "wms_time_hr": 0.0
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "A-P",
-    "worker_name": "㈜[주간]이봉진",
+    "worker_name": "[주간]이봉진",
     "shift": "주간",
-    "std_time_hr": 0.844183,
-    "act_time_hr": 1.240972,
     "pick_amount": 4651300.0,
     "pick_box": 63,
-    "wms_time_hr": 3.4461
+    "wave_time_hr": 0.994709,
+    "wms_time_hr": 6.280533
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "A-P",
-    "worker_name": "㈜[주간]이진옥",
+    "worker_name": "[주간]이진옥",
     "shift": "주간",
-    "std_time_hr": 0.288194,
-    "act_time_hr": 0.499217,
     "pick_amount": 4693800.0,
     "pick_box": 13,
-    "wms_time_hr": 0.7531
+    "wave_time_hr": 0.164244,
+    "wms_time_hr": 4.639331
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "A-P",
-    "worker_name": "㈜[주간]정민규",
+    "worker_name": "[주간]정민규",
     "shift": "주간",
-    "std_time_hr": 0.897717,
-    "act_time_hr": 0.995167,
     "pick_amount": 3789360.0,
     "pick_box": 32,
-    "wms_time_hr": 7.015
+    "wave_time_hr": 0.418163,
+    "wms_time_hr": 6.015147
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "A-P",
-    "worker_name": "㈜[주간]조대영",
+    "worker_name": "[주간]조대영",
     "shift": "주간",
-    "std_time_hr": 2.346161,
-    "act_time_hr": 3.480711,
     "pick_amount": 10210650.0,
     "pick_box": 127,
-    "wms_time_hr": 7.1894
+    "wave_time_hr": 2.353153,
+    "wms_time_hr": 6.189294
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "A-P",
-    "worker_name": "㈜[주간]조재윤",
+    "worker_name": "[주간]조재윤",
     "shift": "주간",
-    "std_time_hr": 0.617394,
-    "act_time_hr": 0.865256,
     "pick_amount": 3590530.0,
     "pick_box": 38,
-    "wms_time_hr": 0.9303
+    "wave_time_hr": 0.707093,
+    "wms_time_hr": 0.930259
   },
   {
     "work_date": "2026-07-01",
     "center": "양지1센터",
     "owner": "일룸",
     "zone": "A-P",
-    "worker_name": "㈜[주간]한정흠",
+    "worker_name": "[주간]한정흠",
     "shift": "주간",
-    "std_time_hr": 0.0,
-    "act_time_hr": 0.0,
     "pick_amount": 1385900.0,
     "pick_box": 4,
-    "wms_time_hr": 0.0553
+    "wave_time_hr": 0.029894,
+    "wms_time_hr": 0.029894
   },
   {
     "work_date": "2026-07-01",
@@ -643,11 +594,10 @@
     "zone": "DPS",
     "worker_name": "DPS",
     "shift": "주간",
-    "std_time_hr": 43.030167,
-    "act_time_hr": 41.120278,
     "pick_amount": 19680200.0,
     "pick_box": 1457,
-    "wms_time_hr": 0.0073
+    "wave_time_hr": 4.7e-05,
+    "wms_time_hr": 6.30922
   },
   {
     "work_date": "2026-07-01",
@@ -656,11 +606,10 @@
     "zone": "E-F",
     "worker_name": "김성진1",
     "shift": "주간",
-    "std_time_hr": 2.121297,
-    "act_time_hr": 2.826831,
     "pick_amount": 17696000.0,
     "pick_box": 347,
-    "wms_time_hr": 7.2758
+    "wave_time_hr": 1.988975,
+    "wms_time_hr": 6.442501
   },
   {
     "work_date": "2026-07-01",
@@ -669,11 +618,10 @@
     "zone": "E-F",
     "worker_name": "김영진",
     "shift": "주간",
-    "std_time_hr": 1.326978,
-    "act_time_hr": 3.269778,
     "pick_amount": 13933000.0,
     "pick_box": 317,
-    "wms_time_hr": 5.83
+    "wave_time_hr": 3.198494,
+    "wms_time_hr": 4.996525
   },
   {
     "work_date": "2026-07-01",
@@ -682,11 +630,10 @@
     "zone": "E-F",
     "worker_name": "김진호",
     "shift": "주간",
-    "std_time_hr": 1.3026,
-    "act_time_hr": 2.442494,
     "pick_amount": 13125000.0,
     "pick_box": 256,
-    "wms_time_hr": 5.7942
+    "wave_time_hr": 2.126018,
+    "wms_time_hr": 4.960791
   },
   {
     "work_date": "2026-07-01",
@@ -695,11 +642,10 @@
     "zone": "E-F",
     "worker_name": "김현철",
     "shift": "주간",
-    "std_time_hr": 0.777578,
-    "act_time_hr": 1.065556,
     "pick_amount": 5432000.0,
     "pick_box": 138,
-    "wms_time_hr": 3.5642
+    "wave_time_hr": 0.921659,
+    "wms_time_hr": 1.166437
   },
   {
     "work_date": "2026-07-01",
@@ -708,11 +654,10 @@
     "zone": "E-F",
     "worker_name": "박재형",
     "shift": "주간",
-    "std_time_hr": 1.748031,
-    "act_time_hr": 3.130408,
     "pick_amount": 9303000.0,
     "pick_box": 206,
-    "wms_time_hr": 5.6678
+    "wave_time_hr": 2.824243,
+    "wms_time_hr": 5.096468
   },
   {
     "work_date": "2026-07-01",
@@ -721,11 +666,10 @@
     "zone": "E-F",
     "worker_name": "안복기",
     "shift": "주간",
-    "std_time_hr": 1.675117,
-    "act_time_hr": 2.320222,
     "pick_amount": 12401000.0,
     "pick_box": 307,
-    "wms_time_hr": 5.5594
+    "wave_time_hr": 1.90521,
+    "wms_time_hr": 4.726114
   },
   {
     "work_date": "2026-07-01",
@@ -734,11 +678,10 @@
     "zone": "E-F",
     "worker_name": "홍석호",
     "shift": "주간",
-    "std_time_hr": 0.643911,
-    "act_time_hr": 0.618011,
     "pick_amount": 8916000.0,
     "pick_box": 158,
-    "wms_time_hr": 5.0269
+    "wave_time_hr": 0.420172,
+    "wms_time_hr": 4.19358
   },
   {
     "work_date": "2026-07-01",
@@ -747,11 +690,10 @@
     "zone": "E-F",
     "worker_name": "황호윤",
     "shift": "주간",
-    "std_time_hr": 2.205211,
-    "act_time_hr": 2.765689,
     "pick_amount": 13073000.0,
     "pick_box": 396,
-    "wms_time_hr": 5.8264
+    "wave_time_hr": 2.253014,
+    "wms_time_hr": 4.992936
   },
   {
     "work_date": "2026-07-01",
@@ -760,11 +702,10 @@
     "zone": "J-K",
     "worker_name": "김경태",
     "shift": "주간",
-    "std_time_hr": 1.454375,
-    "act_time_hr": 2.072847,
     "pick_amount": 12769000.0,
     "pick_box": 221,
-    "wms_time_hr": 5.8264
+    "wave_time_hr": 2.306019,
+    "wms_time_hr": 4.993073
   },
   {
     "work_date": "2026-07-01",
@@ -773,11 +714,10 @@
     "zone": "J-K",
     "worker_name": "김민우",
     "shift": "주간",
-    "std_time_hr": 0.723306,
-    "act_time_hr": 3.121153,
     "pick_amount": 6627000.0,
     "pick_box": 88,
-    "wms_time_hr": 3.2503
+    "wave_time_hr": 0.596519,
+    "wms_time_hr": 1.003115
   },
   {
     "work_date": "2026-07-01",
@@ -786,11 +726,10 @@
     "zone": "J-K",
     "worker_name": "김성진2",
     "shift": "주간",
-    "std_time_hr": 2.064889,
-    "act_time_hr": 2.267417,
     "pick_amount": 23226000.0,
     "pick_box": 432,
-    "wms_time_hr": 6.3453
+    "wave_time_hr": 1.510137,
+    "wms_time_hr": 5.511931
   },
   {
     "work_date": "2026-07-01",
@@ -799,11 +738,10 @@
     "zone": "J-K",
     "worker_name": "김영진",
     "shift": "주간",
-    "std_time_hr": 0.175778,
-    "act_time_hr": 0.302403,
     "pick_amount": 1192000.0,
     "pick_box": 16,
-    "wms_time_hr": 0.6522
+    "wave_time_hr": 0.259544,
+    "wms_time_hr": 0.259544
   },
   {
     "work_date": "2026-07-01",
@@ -812,11 +750,10 @@
     "zone": "J-K",
     "worker_name": "김용주",
     "shift": "주간",
-    "std_time_hr": 0.383306,
-    "act_time_hr": 0.616194,
     "pick_amount": 7539000.0,
     "pick_box": 50,
-    "wms_time_hr": 0.7492
+    "wave_time_hr": 0.438087,
+    "wms_time_hr": 0.748935
   },
   {
     "work_date": "2026-07-01",
@@ -825,11 +762,10 @@
     "zone": "J-K",
     "worker_name": "김진호",
     "shift": "주간",
-    "std_time_hr": 0.085792,
-    "act_time_hr": 0.085792,
     "pick_amount": 1093000.0,
     "pick_box": 5,
-    "wms_time_hr": 0.2897
+    "wave_time_hr": 0.041113,
+    "wms_time_hr": 0.129472
   },
   {
     "work_date": "2026-07-01",
@@ -838,11 +774,10 @@
     "zone": "J-K",
     "worker_name": "김태우",
     "shift": "주간",
-    "std_time_hr": 0.0695,
-    "act_time_hr": 0.0695,
     "pick_amount": 41000.0,
     "pick_box": 1,
-    "wms_time_hr": null
+    "wave_time_hr": 0.020556,
+    "wms_time_hr": 0.0
   },
   {
     "work_date": "2026-07-01",
@@ -851,11 +786,10 @@
     "zone": "J-K",
     "worker_name": "박재형",
     "shift": "주간",
-    "std_time_hr": 0.07925,
-    "act_time_hr": 0.07925,
     "pick_amount": 384000.0,
     "pick_box": 4,
-    "wms_time_hr": 0.6047
+    "wave_time_hr": 0.020556,
+    "wms_time_hr": 0.0
   },
   {
     "work_date": "2026-07-01",
@@ -864,11 +798,10 @@
     "zone": "J-K",
     "worker_name": "신동섭",
     "shift": "주간",
-    "std_time_hr": 0.233167,
-    "act_time_hr": 0.25325,
     "pick_amount": 1460000.0,
     "pick_box": 16,
-    "wms_time_hr": 1.2058
+    "wave_time_hr": 0.129602,
+    "wms_time_hr": 0.47796
   },
   {
     "work_date": "2026-07-01",
@@ -877,11 +810,10 @@
     "zone": "J-K",
     "worker_name": "신용수",
     "shift": "주간",
-    "std_time_hr": 1.680014,
-    "act_time_hr": 2.929542,
     "pick_amount": 16172000.0,
     "pick_box": 191,
-    "wms_time_hr": 6.5411
+    "wave_time_hr": 2.635986,
+    "wms_time_hr": 5.707838
   },
   {
     "work_date": "2026-07-01",
@@ -890,11 +822,10 @@
     "zone": "J-K",
     "worker_name": "안복기",
     "shift": "주간",
-    "std_time_hr": 0.220097,
-    "act_time_hr": 0.329069,
     "pick_amount": 1893000.0,
     "pick_box": 23,
-    "wms_time_hr": 0.9
+    "wave_time_hr": 0.244296,
+    "wms_time_hr": 0.315428
   },
   {
     "work_date": "2026-07-01",
@@ -903,11 +834,10 @@
     "zone": "J-K",
     "worker_name": "장재완",
     "shift": "주간",
-    "std_time_hr": 0.534972,
-    "act_time_hr": 0.444722,
     "pick_amount": 179800.0,
     "pick_box": 62,
-    "wms_time_hr": 7.3717
+    "wave_time_hr": 0.12961,
+    "wms_time_hr": 6.538273
   },
   {
     "work_date": "2026-07-01",
@@ -916,11 +846,10 @@
     "zone": "J-K",
     "worker_name": "정준호",
     "shift": "주간",
-    "std_time_hr": 1.135514,
-    "act_time_hr": 2.29625,
     "pick_amount": 12225000.0,
     "pick_box": 149,
-    "wms_time_hr": 6.0414
+    "wave_time_hr": 1.946418,
+    "wms_time_hr": 5.208011
   },
   {
     "work_date": "2026-07-01",
@@ -929,11 +858,10 @@
     "zone": "J-K",
     "worker_name": "조현석",
     "shift": "주간",
-    "std_time_hr": 2.354153,
-    "act_time_hr": 3.509347,
     "pick_amount": 22936000.0,
     "pick_box": 379,
-    "wms_time_hr": 6.4069
+    "wave_time_hr": 2.426283,
+    "wms_time_hr": 5.573629
   },
   {
     "work_date": "2026-07-01",
@@ -942,11 +870,10 @@
     "zone": "L",
     "worker_name": "김경태",
     "shift": "주간",
-    "std_time_hr": 0.089417,
-    "act_time_hr": 0.089417,
     "pick_amount": 574000.0,
     "pick_box": 7,
-    "wms_time_hr": 0.5753
+    "wave_time_hr": 0.022205,
+    "wms_time_hr": 0.0
   },
   {
     "work_date": "2026-07-01",
@@ -955,11 +882,10 @@
     "zone": "L",
     "worker_name": "김민우",
     "shift": "주간",
-    "std_time_hr": 1.765139,
-    "act_time_hr": 1.957694,
     "pick_amount": 21670210.0,
     "pick_box": 140,
-    "wms_time_hr": 3.9269
+    "wave_time_hr": 1.000216,
+    "wms_time_hr": 6.343719
   },
   {
     "work_date": "2026-07-01",
@@ -968,11 +894,10 @@
     "zone": "L",
     "worker_name": "김용주",
     "shift": "주간",
-    "std_time_hr": 0.241639,
-    "act_time_hr": 0.180806,
     "pick_amount": 6642000.0,
     "pick_box": 17,
-    "wms_time_hr": 1.1683
+    "wave_time_hr": 4.3e-05,
+    "wms_time_hr": 0.045869
   },
   {
     "work_date": "2026-07-01",
@@ -981,11 +906,10 @@
     "zone": "L",
     "worker_name": "김진호",
     "shift": "주간",
-    "std_time_hr": 0.097861,
-    "act_time_hr": 0.069611,
     "pick_amount": 1290000.0,
     "pick_box": 6,
-    "wms_time_hr": 1.0614
+    "wave_time_hr": 9e-06,
+    "wms_time_hr": 9e-06
   },
   {
     "work_date": "2026-07-01",
@@ -994,11 +918,10 @@
     "zone": "L",
     "worker_name": "김현철",
     "shift": "주간",
-    "std_time_hr": 0.685875,
-    "act_time_hr": 1.245319,
     "pick_amount": 10244000.0,
     "pick_box": 65,
-    "wms_time_hr": 1.5958
+    "wave_time_hr": 0.98299,
+    "wms_time_hr": 4.326711
   },
   {
     "work_date": "2026-07-01",
@@ -1007,11 +930,10 @@
     "zone": "L",
     "worker_name": "박재형",
     "shift": "주간",
-    "std_time_hr": 0.227417,
-    "act_time_hr": 0.220833,
     "pick_amount": 2049000.0,
     "pick_box": 12,
-    "wms_time_hr": 0.87
+    "wave_time_hr": 0.044197,
+    "wms_time_hr": 4.141557
   },
   {
     "work_date": "2026-07-01",
@@ -1020,11 +942,10 @@
     "zone": "L",
     "worker_name": "신용수",
     "shift": "주간",
-    "std_time_hr": 0.084972,
-    "act_time_hr": 0.093917,
     "pick_amount": 1168000.0,
     "pick_box": 8,
-    "wms_time_hr": 0.2061
+    "wave_time_hr": 0.023803,
+    "wms_time_hr": 0.023803
   },
   {
     "work_date": "2026-07-01",
@@ -1033,11 +954,10 @@
     "zone": "L",
     "worker_name": "임길재",
     "shift": "주간",
-    "std_time_hr": 1.447056,
-    "act_time_hr": 1.552028,
     "pick_amount": 26239700.0,
     "pick_box": 156,
-    "wms_time_hr": 1.1828
+    "wave_time_hr": 0.654135,
+    "wms_time_hr": 1.182835
   },
   {
     "work_date": "2026-07-01",
@@ -1046,11 +966,10 @@
     "zone": "L",
     "worker_name": "정준호",
     "shift": "주간",
-    "std_time_hr": 0.1125,
-    "act_time_hr": 0.200111,
     "pick_amount": 1331000.0,
     "pick_box": 5,
-    "wms_time_hr": 0.6614
+    "wave_time_hr": 0.127495,
+    "wms_time_hr": 0.127495
   },
   {
     "work_date": "2026-07-01",
@@ -1059,11 +978,10 @@
     "zone": "L",
     "worker_name": "조현석",
     "shift": "주간",
-    "std_time_hr": 0.111889,
-    "act_time_hr": 0.099861,
     "pick_amount": 267120.0,
     "pick_box": 5,
-    "wms_time_hr": 0.115
+    "wave_time_hr": 0.003409,
+    "wms_time_hr": 0.015544
   },
   {
     "work_date": "2026-07-01",
@@ -1072,11 +990,10 @@
     "zone": "L",
     "worker_name": "황호윤",
     "shift": "주간",
-    "std_time_hr": 0.288389,
-    "act_time_hr": 0.453,
     "pick_amount": 3459000.0,
     "pick_box": 23,
-    "wms_time_hr": 0.9886
+    "wave_time_hr": 0.327099,
+    "wms_time_hr": 0.569525
   },
   {
     "work_date": "2026-07-01",
@@ -1085,11 +1002,10 @@
     "zone": "B",
     "worker_name": "김민우",
     "shift": "주간",
-    "std_time_hr": 0.103594,
-    "act_time_hr": 0.109022,
     "pick_amount": 2524000.0,
     "pick_box": 6,
-    "wms_time_hr": 0.2308
+    "wave_time_hr": 0.071265,
+    "wms_time_hr": 0.071265
   },
   {
     "work_date": "2026-07-01",
@@ -1098,11 +1014,10 @@
     "zone": "B",
     "worker_name": "김성진2",
     "shift": "주간",
-    "std_time_hr": 0.11605,
-    "act_time_hr": 0.203967,
     "pick_amount": 1580000.0,
     "pick_box": 7,
-    "wms_time_hr": 0.4922
+    "wave_time_hr": 0.124621,
+    "wms_time_hr": 0.236143
   },
   {
     "work_date": "2026-07-01",
@@ -1111,11 +1026,10 @@
     "zone": "B",
     "worker_name": "김진태",
     "shift": "주간",
-    "std_time_hr": 2.209183,
-    "act_time_hr": 1.7583,
     "pick_amount": 65123000.0,
     "pick_box": 214,
-    "wms_time_hr": 7.545
+    "wave_time_hr": 0.192904,
+    "wms_time_hr": 6.711573
   },
   {
     "work_date": "2026-07-01",
@@ -1124,11 +1038,10 @@
     "zone": "B",
     "worker_name": "안복기",
     "shift": "주간",
-    "std_time_hr": 0.1184,
-    "act_time_hr": 0.160933,
     "pick_amount": 4443000.0,
     "pick_box": 11,
-    "wms_time_hr": 0.2897
+    "wave_time_hr": 0.082933,
+    "wms_time_hr": 0.10972
   },
   {
     "work_date": "2026-07-01",
@@ -1137,11 +1050,10 @@
     "zone": "B",
     "worker_name": "홍석호",
     "shift": "주간",
-    "std_time_hr": 0.16015,
-    "act_time_hr": 0.169206,
     "pick_amount": 3405000.0,
     "pick_box": 11,
-    "wms_time_hr": 1.3994
+    "wave_time_hr": 0.043631,
+    "wms_time_hr": 0.092892
   },
   {
     "work_date": "2026-07-01",
@@ -1150,11 +1062,10 @@
     "zone": "L/S",
     "worker_name": "신동섭",
     "shift": "주간",
-    "std_time_hr": 3.894028,
-    "act_time_hr": 3.846889,
     "pick_amount": 7816000.0,
     "pick_box": 513,
-    "wms_time_hr": 5.8033
+    "wave_time_hr": 1.626308,
+    "wms_time_hr": 7.009356
   },
   {
     "work_date": "2026-07-01",
@@ -1163,11 +1074,10 @@
     "zone": "M-N",
     "worker_name": "[야간]교육08",
     "shift": "야간",
-    "std_time_hr": 2.114086,
-    "act_time_hr": 5.586169,
     "pick_amount": 10935200.0,
     "pick_box": 219,
-    "wms_time_hr": 6.7947
+    "wave_time_hr": 5.106863,
+    "wms_time_hr": 5.794697
   },
   {
     "work_date": "2026-07-01",
@@ -1176,11 +1086,10 @@
     "zone": "M-N",
     "worker_name": "[야간]김봉균",
     "shift": "야간",
-    "std_time_hr": 3.036661,
-    "act_time_hr": 8.26145,
     "pick_amount": 26750800.0,
     "pick_box": 392,
-    "wms_time_hr": 10.5811
+    "wave_time_hr": 7.604797,
+    "wms_time_hr": 9.581232
   },
   {
     "work_date": "2026-07-01",
@@ -1189,11 +1098,10 @@
     "zone": "M-N",
     "worker_name": "[야간]김시훈",
     "shift": "야간",
-    "std_time_hr": 4.196428,
-    "act_time_hr": 5.627261,
     "pick_amount": 23766900.0,
     "pick_box": 376,
-    "wms_time_hr": 10.3186
+    "wave_time_hr": 3.443844,
+    "wms_time_hr": 9.318582
   },
   {
     "work_date": "2026-07-01",
@@ -1202,11 +1110,10 @@
     "zone": "M-N",
     "worker_name": "[야간]박찬우",
     "shift": "야간",
-    "std_time_hr": 4.243108,
-    "act_time_hr": 8.737908,
     "pick_amount": 28788500.0,
     "pick_box": 501,
-    "wms_time_hr": 10.6433
+    "wave_time_hr": 7.751429,
+    "wms_time_hr": 9.643288
   },
   {
     "work_date": "2026-07-01",
@@ -1215,167 +1122,130 @@
     "zone": "M-N",
     "worker_name": "[야간]전종욱",
     "shift": "야간",
-    "std_time_hr": 3.16395,
-    "act_time_hr": 6.538589,
     "pick_amount": 41054800.0,
     "pick_box": 508,
-    "wms_time_hr": 8.8058
+    "wave_time_hr": 5.487671,
+    "wms_time_hr": 7.805915
   },
   {
     "work_date": "2026-07-01",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "M-N",
-    "worker_name": "㈜[주간]강남별",
+    "worker_name": "[주간]강남별",
     "shift": "주간",
-    "std_time_hr": 0.817272,
-    "act_time_hr": 1.005733,
     "pick_amount": 5192600.0,
     "pick_box": 97,
-    "wms_time_hr": 1.2706
+    "wave_time_hr": 0.752213,
+    "wms_time_hr": 1.270518
   },
   {
     "work_date": "2026-07-01",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "M-N",
-    "worker_name": "㈜[주간]권혁",
+    "worker_name": "[주간]권혁",
     "shift": "주간",
-    "std_time_hr": 3.246581,
-    "act_time_hr": 5.653797,
     "pick_amount": 18135900.0,
     "pick_box": 301,
-    "wms_time_hr": 9.3606
+    "wave_time_hr": 5.919268,
+    "wms_time_hr": 9.193809
   },
   {
     "work_date": "2026-07-01",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "M-N",
-    "worker_name": "㈜[주간]김규태",
+    "worker_name": "[주간]김대원",
     "shift": "주간",
-    "std_time_hr": 0.440883,
-    "act_time_hr": 0.384383,
-    "pick_amount": 1782300.0,
-    "pick_box": 57,
-    "wms_time_hr": 5.06
-  },
-  {
-    "work_date": "2026-07-01",
-    "center": "양지2센터",
-    "owner": "데스커",
-    "zone": "M-N",
-    "worker_name": "㈜[주간]김대원",
-    "shift": "주간",
-    "std_time_hr": 0.435361,
-    "act_time_hr": 0.458156,
     "pick_amount": 1341200.0,
     "pick_box": 20,
-    "wms_time_hr": 0.7264
+    "wave_time_hr": 0.193652,
+    "wms_time_hr": 0.726319
   },
   {
     "work_date": "2026-07-01",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "M-N",
-    "worker_name": "㈜[주간]이승민",
+    "worker_name": "[주간]이승민",
     "shift": "주간",
-    "std_time_hr": 3.699597,
-    "act_time_hr": 5.404053,
     "pick_amount": 23023400.0,
     "pick_box": 420,
-    "wms_time_hr": 7.725
+    "wave_time_hr": 5.194759,
+    "wms_time_hr": 8.058258
   },
   {
     "work_date": "2026-07-01",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "M-N",
-    "worker_name": "㈜[주간]조진형",
+    "worker_name": "[주간]조진형",
     "shift": "주간",
-    "std_time_hr": 1.939569,
-    "act_time_hr": 4.727675,
     "pick_amount": 11759500.0,
     "pick_box": 190,
-    "wms_time_hr": 5.65
+    "wave_time_hr": 4.811103,
+    "wms_time_hr": 5.650024
   },
   {
     "work_date": "2026-07-01",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "M-N",
-    "worker_name": "㈜[주간]최우성",
+    "worker_name": "[주간]최우성",
     "shift": "주간",
-    "std_time_hr": 2.564269,
-    "act_time_hr": 2.719947,
     "pick_amount": 16133600.0,
     "pick_box": 273,
-    "wms_time_hr": 4.3942
+    "wave_time_hr": 2.126468,
+    "wms_time_hr": 4.394142
   },
   {
     "work_date": "2026-07-01",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "S",
-    "worker_name": "㈜[주간]김규태",
+    "worker_name": "[주간]소물1",
     "shift": "주간",
-    "std_time_hr": 6.067681,
-    "act_time_hr": 3.737819,
-    "pick_amount": 10939600.0,
-    "pick_box": 762,
-    "wms_time_hr": 7.3742
-  },
-  {
-    "work_date": "2026-07-01",
-    "center": "양지2센터",
-    "owner": "데스커",
-    "zone": "S",
-    "worker_name": "㈜[주간]소물1",
-    "shift": "주간",
-    "std_time_hr": 0.944111,
-    "act_time_hr": 1.169333,
     "pick_amount": 1833800.0,
     "pick_box": 138,
-    "wms_time_hr": 2.1081
+    "wave_time_hr": 0.769504,
+    "wms_time_hr": 2.107833
   },
   {
     "work_date": "2026-07-01",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "S",
-    "worker_name": "㈜[주간]이호석",
+    "worker_name": "[주간]이호석",
     "shift": "주간",
-    "std_time_hr": 0.652847,
-    "act_time_hr": 0.602486,
     "pick_amount": 160340.0,
     "pick_box": 17,
-    "wms_time_hr": 0.1547
+    "wave_time_hr": 0.017335,
+    "wms_time_hr": 0.154622
   },
   {
     "work_date": "2026-07-01",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "S",
-    "worker_name": "㈜[주간]전승민",
+    "worker_name": "[주간]전승민",
     "shift": "주간",
-    "std_time_hr": 2.724069,
-    "act_time_hr": 2.148542,
     "pick_amount": 6376420.0,
     "pick_box": 392,
-    "wms_time_hr": 8.3328
+    "wave_time_hr": 1.243957,
+    "wms_time_hr": 7.83291
   },
   {
     "work_date": "2026-07-01",
     "center": "양지2센터",
     "owner": "데스커",
     "zone": "S",
-    "worker_name": "㈜[주간]최우성",
+    "worker_name": "[주간]최우성",
     "shift": "주간",
-    "std_time_hr": 2.627389,
-    "act_time_hr": 1.948361,
     "pick_amount": 4498220.0,
     "pick_box": 254,
-    "wms_time_hr": 0.9492
+    "wave_time_hr": 0.645441,
+    "wms_time_hr": 0.949174
   },
   {
     "work_date": "2026-07-01",
@@ -1384,11 +1254,10 @@
     "zone": "W",
     "worker_name": "박성범",
     "shift": "주간",
-    "std_time_hr": 1.929594,
-    "act_time_hr": 2.683144,
     "pick_amount": 28081210.0,
     "pick_box": 142,
-    "wms_time_hr": 4.4233
+    "wave_time_hr": 2.814966,
+    "wms_time_hr": 5.531621
   },
   {
     "work_date": "2026-07-01",
@@ -1397,11 +1266,10 @@
     "zone": "W",
     "worker_name": "이정진",
     "shift": "주간",
-    "std_time_hr": 1.912781,
-    "act_time_hr": 2.108203,
     "pick_amount": 20037200.0,
     "pick_box": 118,
-    "wms_time_hr": 4.3528
+    "wave_time_hr": 2.068344,
+    "wms_time_hr": 6.148968
   },
   {
     "work_date": "2026-07-01",
@@ -1410,11 +1278,10 @@
     "zone": "W",
     "worker_name": "이진수",
     "shift": "주간",
-    "std_time_hr": 1.411508,
-    "act_time_hr": 1.418747,
     "pick_amount": 17766935.0,
     "pick_box": 68,
-    "wms_time_hr": 1.5789
+    "wave_time_hr": 0.547452,
+    "wms_time_hr": 4.980681
   },
   {
     "work_date": "2026-07-01",
@@ -1423,11 +1290,10 @@
     "zone": "W",
     "worker_name": "정준석",
     "shift": "주간",
-    "std_time_hr": 0.342042,
-    "act_time_hr": 0.347058,
     "pick_amount": 8381063.0,
     "pick_box": 33,
-    "wms_time_hr": 3.1164
+    "wave_time_hr": 0.887958,
+    "wms_time_hr": 3.322433
   },
   {
     "work_date": "2026-07-01",
@@ -1436,11 +1302,10 @@
     "zone": "R",
     "worker_name": "고윤석",
     "shift": "주간",
-    "std_time_hr": 1.117867,
-    "act_time_hr": 1.836667,
     "pick_amount": 24715823.0,
     "pick_box": 37,
-    "wms_time_hr": 5.5456
+    "wave_time_hr": 1.662723,
+    "wms_time_hr": 6.045388
   },
   {
     "work_date": "2026-07-01",
@@ -1449,11 +1314,10 @@
     "zone": "R",
     "worker_name": "김석현",
     "shift": "주간",
-    "std_time_hr": 5.479569,
-    "act_time_hr": 5.183703,
     "pick_amount": 51838970.0,
     "pick_box": 110,
-    "wms_time_hr": 6.9894
+    "wave_time_hr": 0.876399,
+    "wms_time_hr": 6.489469
   },
   {
     "work_date": "2026-07-01",
@@ -1462,11 +1326,10 @@
     "zone": "R",
     "worker_name": "박성범",
     "shift": "주간",
-    "std_time_hr": 0.295208,
-    "act_time_hr": 0.332819,
     "pick_amount": 3455000.0,
     "pick_box": 25,
-    "wms_time_hr": 1.1083
+    "wave_time_hr": 0.337596,
+    "wms_time_hr": 1.651489
   },
   {
     "work_date": "2026-07-01",
@@ -1475,11 +1338,10 @@
     "zone": "R",
     "worker_name": "이정진",
     "shift": "주간",
-    "std_time_hr": 1.016003,
-    "act_time_hr": 1.181625,
     "pick_amount": 7788000.0,
     "pick_box": 56,
-    "wms_time_hr": 1.9969
+    "wave_time_hr": 0.854172,
+    "wms_time_hr": 4.720544
   },
   {
     "work_date": "2026-07-01",
@@ -1488,11 +1350,10 @@
     "zone": "R",
     "worker_name": "이진수",
     "shift": "주간",
-    "std_time_hr": 0.652181,
-    "act_time_hr": 0.633847,
     "pick_amount": 7639000.0,
     "pick_box": 42,
-    "wms_time_hr": 3.4019
+    "wave_time_hr": 0.279523,
+    "wms_time_hr": 3.306958
   },
   {
     "work_date": "2026-07-01",
@@ -1501,10 +1362,9 @@
     "zone": "R",
     "worker_name": "정준석",
     "shift": "주간",
-    "std_time_hr": 1.652464,
-    "act_time_hr": 1.851992,
     "pick_amount": 14022001.0,
     "pick_box": 83,
-    "wms_time_hr": 4.8156
+    "wave_time_hr": 2.167898,
+    "wms_time_hr": 7.098466
   }
 ]
