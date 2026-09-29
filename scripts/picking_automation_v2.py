@@ -967,83 +967,88 @@ def _load_master_sheets(target: date) -> tuple | None:
     return f1, i1, d1, du1
 
 
+# ── raw → A~L 정제 프레임 빌드 (process()와 reconcile_cross_function.py가 공유) ──
+def _build_daily_frames(target: date, from_master: bool = False):
+    """(sd_f1, sd_i1, sd_d1, sd_du1) 반환 — 순수 Python, Excel 불필요.
+
+    process()의 [1]/[2] 단계와 동일한 로직을 재사용 가능한 함수로 분리(2026-09-29,
+    reconcile_cross_function.py가 피킹 raw 타임스탬프를 그대로 다시 얻기 위해 필요)."""
+    if from_master:
+        master_data = _load_master_sheets(target)
+        if master_data:
+            return master_data
+        print("  [마스터 모드 실패] raw 기반으로 폴백")
+
+    lm1 = _load_loc_map(LOC_MASTER1)
+    lm2 = _load_loc_map(LOC_MASTER2)
+    lm3 = _load_loc_map(LOC_MASTER3)
+
+    def _load_filtered(owner, filter_fn):
+        p = find_raw(target, owner)
+        if not p:
+            print(f"  [{owner}] 파일 없음")
+            return pd.DataFrame()
+        print(f"  [{owner}] {p.name}")
+        df = _load_raw(p)
+        out = filter_fn(df, target, p)
+        print(f"    필터 후 {len(out)}행")
+        return out
+
+    # ── 1. raw data 파일 필터링
+    print("\n  [1] raw data 필터링...")
+    raw_f1  = _load_filtered("퍼시스", _filter_f1)
+    raw_i1  = _load_filtered("일룸",   _filter_i1)
+    raw_d1  = _load_filtered("데스커", _filter_d1)
+    raw_du1 = _load_filtered("3PL",    _filter_du1)
+
+    # 퍼시스 특수: G구역 작업자 '장재완' From 로케이션 → K-115-00
+    if not raw_f1.empty:
+        _mask_jw = (
+            raw_f1["작업자"].astype(str).str.contains("장재완", na=False) &
+            raw_f1["LOCATION"].astype(str).str.upper().str.startswith("G-")
+        )
+        n_jw = _mask_jw.sum()
+        if n_jw > 0:
+            raw_f1.loc[_mask_jw, "LOCATION"] = "K-115-00"
+            print(f"    [퍼시스] 장재완 G구역 {n_jw}행 → K-115-00 변경")
+
+    # ── 2. 시트 레코드로 정제 (zone 분류 + 정렬) — 이전엔 "가동률-로데이터"
+    # Excel 템플릿(KGA)에 원본을 넣고 CalculateFull()로 rack/bay/level까지
+    # 계산해서 읽어왔지만, 그건 표준시간(AS/AT/AU) 수식 입력값을 만들기
+    # 위해서였을 뿐 — 가동률 개념을 없앤 지금은 필요 없다. _build()가 이미
+    # 순수 Python으로 동일한 A~L(zone/작업자/PLT/WAVE/작업일시 등) 구조를
+    # 만들어내므로 그걸 직접 쓴다 (2026-09-28).
+    print("\n  [2] 데이터 정제...")
+    sd_f1 = _build(
+        raw_f1, lambda loc: _zone1(loc, lm1),
+        last_zones=[],  # L/S를 마지막에 고정하지 않고 K(작업일시) 순 혼합 배치
+    )
+    sd_i1 = _build(
+        raw_i1, lambda loc: _zone1(loc, lm1),
+        last_zones=["DPS"],
+        loc_corrections=_I1_LOC_CORRECTIONS,
+    )
+    sd_d1 = _build(
+        raw_d1, lambda loc: _zone2(loc, lm2),
+        fixed_region="가설창고",
+        last_zones=["S"],
+    )
+    sd_du1 = _build(
+        raw_du1, lambda loc: _zone3(loc, lm3),
+        fixed_region="가설창고",
+        last_zones=[],
+    )
+    print(f"    F_1={len(sd_f1)}행  I_1={len(sd_i1)}행  "
+          f"D_1={len(sd_d1)}행  DU_1={len(sd_du1)}행")
+    return sd_f1, sd_i1, sd_d1, sd_du1
+
+
 # ── 메인 처리 ────────────────────────────────────────────────────────
 def process(target: date, from_master: bool = False) -> dict:
     date_str = str(target)
     print(f"\n{'='*60}\n처리 날짜: {date_str}\n{'='*60}")
 
-    # ── 마스터 직접 모드: 마스터 시트 A-L 데이터 로드 ───────────────────
-    if from_master:
-        master_data = _load_master_sheets(target)
-        if master_data:
-            sd_f1, sd_i1, sd_d1, sd_du1 = master_data
-        else:
-            print("  [마스터 모드 실패] raw 기반으로 폴백")
-            from_master = False
-
-    # ── raw 기반 모드: raw → A~L 정제 (순수 Python, Excel 불필요) ────────
-    if not from_master:
-        lm1 = _load_loc_map(LOC_MASTER1)
-        lm2 = _load_loc_map(LOC_MASTER2)
-        lm3 = _load_loc_map(LOC_MASTER3)
-
-        def _load_filtered(owner, filter_fn):
-            p = find_raw(target, owner)
-            if not p:
-                print(f"  [{owner}] 파일 없음")
-                return pd.DataFrame()
-            print(f"  [{owner}] {p.name}")
-            df = _load_raw(p)
-            out = filter_fn(df, target, p)
-            print(f"    필터 후 {len(out)}행")
-            return out
-
-        # ── 1. raw data 파일 필터링
-        print("\n  [1] raw data 필터링...")
-        raw_f1  = _load_filtered("퍼시스", _filter_f1)
-        raw_i1  = _load_filtered("일룸",   _filter_i1)
-        raw_d1  = _load_filtered("데스커", _filter_d1)
-        raw_du1 = _load_filtered("3PL",    _filter_du1)
-
-        # 퍼시스 특수: G구역 작업자 '장재완' From 로케이션 → K-115-00
-        if not raw_f1.empty:
-            _mask_jw = (
-                raw_f1["작업자"].astype(str).str.contains("장재완", na=False) &
-                raw_f1["LOCATION"].astype(str).str.upper().str.startswith("G-")
-            )
-            n_jw = _mask_jw.sum()
-            if n_jw > 0:
-                raw_f1.loc[_mask_jw, "LOCATION"] = "K-115-00"
-                print(f"    [퍼시스] 장재완 G구역 {n_jw}행 → K-115-00 변경")
-
-        # ── 2. 시트 레코드로 정제 (zone 분류 + 정렬) — 이전엔 "가동률-로데이터"
-        # Excel 템플릿(KGA)에 원본을 넣고 CalculateFull()로 rack/bay/level까지
-        # 계산해서 읽어왔지만, 그건 표준시간(AS/AT/AU) 수식 입력값을 만들기
-        # 위해서였을 뿐 — 가동률 개념을 없앤 지금은 필요 없다. _build()가 이미
-        # 순수 Python으로 동일한 A~L(zone/작업자/PLT/WAVE/작업일시 등) 구조를
-        # 만들어내므로 그걸 직접 쓴다 (2026-09-28).
-        print("\n  [2] 데이터 정제...")
-        sd_f1 = _build(
-            raw_f1, lambda loc: _zone1(loc, lm1),
-            last_zones=[],  # L/S를 마지막에 고정하지 않고 K(작업일시) 순 혼합 배치
-        )
-        sd_i1 = _build(
-            raw_i1, lambda loc: _zone1(loc, lm1),
-            last_zones=["DPS"],
-            loc_corrections=_I1_LOC_CORRECTIONS,
-        )
-        sd_d1 = _build(
-            raw_d1, lambda loc: _zone2(loc, lm2),
-            fixed_region="가설창고",
-            last_zones=["S"],
-        )
-        sd_du1 = _build(
-            raw_du1, lambda loc: _zone3(loc, lm3),
-            fixed_region="가설창고",
-            last_zones=[],
-        )
-        print(f"    F_1={len(sd_f1)}행  I_1={len(sd_i1)}행  "
-              f"D_1={len(sd_d1)}행  DU_1={len(sd_du1)}행")
+    sd_f1, sd_i1, sd_d1, sd_du1 = _build_daily_frames(target, from_master)
 
     # zone별 행 수 요약
     print("\n  [zone별 행 수]")

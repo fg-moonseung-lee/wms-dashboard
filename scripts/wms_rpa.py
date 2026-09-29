@@ -581,6 +581,12 @@ def run_pipeline(target: date) -> bool:
                                         "--dates", target_str]):
         return False
 
+    # 피킹↔입고 겸업 시간 안분 — 둘 다 1차 적재된 뒤에만 의미가 있는 후처리 단계.
+    # 실패해도(예: 그날 raw 파일 일부 없음) 이미 적재된 값은 그대로 유효하므로
+    # 배포는 계속 진행 (non-fatal, 2026-09-29).
+    _run_step("피킹↔입고 시간 안분", [sys.executable, "scripts/reconcile_cross_function.py",
+                                  "--date", target_str], fatal=False)
+
     # 리포트는 보조 산출물 — 실패해도 배포는 계속 진행 (non-fatal)
     _run_step("일일 리포트 생성", [sys.executable, "scripts/generate_daily_report.py",
                                 "--date", target_str], fatal=False)

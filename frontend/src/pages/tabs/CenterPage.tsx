@@ -6,9 +6,11 @@ import {
 } from 'recharts'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAllZoneData } from '../../hooks/useAllZoneData'
+import { useAllWorkerData } from '../../hooks/useAllWorkerData'
+import { useAllAttendanceData } from '../../hooks/useAllAttendanceData'
 import { periodToRange, dateToBucket, bucketLabel } from '../../lib/weekUtils'
 import type { Granularity } from '../../lib/weekUtils'
-import { OWNER_COLOR, CENTERS, CENTER_COLOR, CENTER_OWNERS, CENTER_OWNER } from '../../lib/supabase'
+import { OWNER_COLOR, CENTERS, CENTER_COLOR, CENTER_OWNERS, CENTER_OWNER, sumAttendanceHours } from '../../lib/supabase'
 import type { ZoneDaily } from '../../lib/supabase'
 import type { Period } from '../../lib/types'
 import type { Metric } from './Overview'
@@ -46,11 +48,13 @@ export default function CenterPage({ period, metric, granularity }: Props) {
   const location = useLocation()
   const navigate = useNavigate()
   const { rows, loading } = useAllZoneData()
+  const { rows: workerRows, loading: workerLoading } = useAllWorkerData()
+  const { rows: attendance, loading: attLoading } = useAllAttendanceData()
   const [selectedCenter, setSelectedCenter] = useState<string | null>(
     (location.state as { center?: string } | null)?.center ?? null
   )
 
-  if (loading) {
+  if (loading || workerLoading || attLoading) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-400">
         <div className="text-center">
@@ -63,6 +67,7 @@ export default function CenterPage({ period, metric, granularity }: Props) {
 
   const { start, end } = periodToRange(period)
   const pRows = rows.filter(r => r.work_date >= start && r.work_date <= end)
+  const pWorkerRows = workerRows.filter(r => r.work_date >= start && r.work_date <= end)
   const isAmt = metric === 'amount'
   const scale = metricScale(metric)
   const unit = isAmt ? '백만원' : '박스'
@@ -72,18 +77,28 @@ export default function CenterPage({ period, metric, granularity }: Props) {
   const centerKpi = CENTERS.map(center => {
     const cOwners = CENTER_OWNERS[center]
     const cRows = pRows.filter(r => cOwners.includes(r.owner))
-    let wave = 0, val = 0
+    let wave = 0, wms = 0, wmsVal = 0, val = 0
     const zones = new Set<string>()
     for (const r of cRows) {
       wave += r.wave_time_hr ?? 0
       val += metricVal(r, metric) / scale
       zones.add(r.zone)
+      if (r.wms_time_hr != null && r.wms_time_hr > 0) {
+        wms += r.wms_time_hr
+        wmsVal += metricVal(r, metric) / scale
+      }
     }
+    const { hours: attHr, hasAny: hasAtt } = sumAttendanceHours(
+      pWorkerRows.filter(r => cOwners.includes(r.owner)), attendance,
+    )
     return {
       center,
       val: +val.toFixed(2),
-      wave,
+      wave, wms,
+      att: hasAtt ? attHr : null,
       pph: wave > 0 ? val / wave : 0,
+      pphWms: wms > 0 ? wmsVal / wms : null,
+      pphAtt: hasAtt && attHr > 0 ? val / attHr : null,
       zones: zones.size,
       owners: cOwners,
     }
@@ -130,13 +145,14 @@ export default function CenterPage({ period, metric, granularity }: Props) {
   const selOwners = selectedCenter ? CENTER_OWNERS[selectedCenter] : []
   const brandKpis = selOwners.map(owner => {
     const oRows = pRows.filter(r => r.owner === owner)
-    let wave = 0, val = 0
+    let wave = 0, wms = 0, val = 0
     const zones = new Set<string>()
     for (const r of oRows) {
       wave += r.wave_time_hr ?? 0
       val += metricVal(r, metric) / scale; zones.add(r.zone)
+      if (r.wms_time_hr != null && r.wms_time_hr > 0) wms += r.wms_time_hr
     }
-    return { owner, val: +val.toFixed(2), wave, zones: zones.size }
+    return { owner, val: +val.toFixed(2), wave, wms, zones: zones.size }
   })
   const selTrendMap = new Map<string, Record<string, number>>()
   for (const r of chartRows.filter(r => selOwners.includes(r.owner))) {
@@ -184,6 +200,8 @@ export default function CenterPage({ period, metric, granularity }: Props) {
                   {isAmt ? fmtM(b.val) : fmtBox(b.val)}
                 </p>
                 <div className="flex gap-3 text-xs text-gray-400">
+                  <span>WMS {b.wms.toFixed(0)}h</span>
+                  <span>·</span>
                   <span>작업시간 {b.wave.toFixed(0)}h</span>
                   <span>·</span>
                   <span>구역 {b.zones}개</span>
@@ -245,9 +263,9 @@ export default function CenterPage({ period, metric, granularity }: Props) {
                 <span>구역 {c.zones}개</span>
               </div>
               <div className="flex gap-3 mt-1 text-xs text-gray-400">
-                <span>작업시간 {c.wave.toFixed(0)}h</span>
+                <span>WMS {c.wms.toFixed(0)}h</span>
                 <span>·</span>
-                <span>시간당 {isAmt ? fmtM(c.pph) : fmtNum(Math.round(c.pph))}</span>
+                <span>시간당 {c.pphWms != null ? (isAmt ? fmtM(c.pphWms) : fmtNum(Math.round(c.pphWms))) : '-'}</span>
               </div>
               <p className="mt-3 text-[11px] text-gray-300">브랜드 상세 보기 ›</p>
             </CardContent>
@@ -298,12 +316,12 @@ export default function CenterPage({ period, metric, granularity }: Props) {
       {/* 센터별 시간당 생산성 + 1센터 브랜드 비중 추이 */}
       <div className="grid grid-cols-2 gap-5">
 
-        {/* 센터별 시간당 생산성 (작업시간 기준) */}
-        <SectionCard title="센터별 시간당 생산성" subtitle="선택 기간 · 작업시간 기준">
+        {/* 센터별 시간당 생산성 (WMS 기준) */}
+        <SectionCard title="센터별 시간당 생산성" subtitle="선택 기간 · WMS시간 기준">
           <div className="space-y-3 py-1">
-            {[...centerKpi].sort((a, b) => b.pph - a.pph).map(c => {
-              const maxPph = Math.max(...centerKpi.map(x => x.pph), 1)
-              const pct = Math.max(4, (c.pph / maxPph) * 100)
+            {[...centerKpi].sort((a, b) => (b.pphWms ?? 0) - (a.pphWms ?? 0)).map(c => {
+              const maxPph = Math.max(...centerKpi.map(x => x.pphWms ?? 0), 1)
+              const pct = Math.max(4, ((c.pphWms ?? 0) / maxPph) * 100)
               return (
                 <div key={c.center}>
                   <div className="flex items-center justify-between mb-1">
@@ -313,13 +331,16 @@ export default function CenterPage({ period, metric, granularity }: Props) {
                       <span className="text-[11px] text-gray-400">{c.owners.join(' · ')}</span>
                     </div>
                     <span className="text-sm font-bold" style={{ color: CENTER_COLOR[c.center] }}>
-                      {isAmt ? fmtM(c.pph) : fmtNum(Math.round(c.pph))}/h
+                      {c.pphWms != null ? `${isAmt ? fmtM(c.pphWms) : fmtNum(Math.round(c.pphWms))}/h` : '-'}
                     </span>
                   </div>
                   <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: CENTER_COLOR[c.center] }} />
                   </div>
-                  <p className="text-[11px] text-gray-400 mt-1">작업시간 {c.wave.toFixed(0)}h</p>
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    근태 {c.pphAtt != null ? `${isAmt ? fmtM(c.pphAtt) : fmtNum(Math.round(c.pphAtt))}/h` : '미입력'}
+                    {' · '}작업 {isAmt ? fmtM(c.pph) : fmtNum(Math.round(c.pph))}/h
+                  </p>
                 </div>
               )
             })}

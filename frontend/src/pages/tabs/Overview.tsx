@@ -4,11 +4,16 @@ import {
 } from 'recharts'
 import { useNavigate } from 'react-router-dom'
 import { useAllZoneData } from '../../hooks/useAllZoneData'
+import { useAllWorkerData } from '../../hooks/useAllWorkerData'
+import type { WorkerActivityRow } from '../../hooks/useAllWorkerData'
+import { useAllAttendanceData } from '../../hooks/useAllAttendanceData'
+import type { AttendanceRecord } from '../../hooks/useAllAttendanceData'
 import { periodToRange, dateToBucket, bucketLabel, dateToWeekStart, getWeekEnd } from '../../lib/weekUtils'
 import type { Granularity } from '../../lib/weekUtils'
 import {
   OWNER_COLOR, OWNERS,
   CENTERS, CENTER_COLOR, CENTER_OWNERS, CENTER_OWNER,
+  sumAttendanceHours,
 } from '../../lib/supabase'
 import type { ZoneDaily } from '../../lib/supabase'
 import type { Period } from '../../lib/types'
@@ -26,13 +31,17 @@ const fmtNum = (v: number) => v.toLocaleString('ko-KR')
 
 interface KpiResult {
   amount: number; box: number
-  wave: number;   wms: number
+  wave: number; wms: number; att: number | null
   zones: number
-  amtPerHr: number;    boxPerHr: number
+  // 시간당 생산성 3단계: 1순위 WMS시간 · 2순위 근태시간(근무시간) · 3순위 작업시간(wave)
   amtPerHrWms: number | null; boxPerHrWms: number | null
+  amtPerHrAtt: number | null; boxPerHrAtt: number | null
+  amtPerHr: number;    boxPerHr: number
 }
 
-function aggregateKpi(rows: ZoneDaily[]): KpiResult {
+function aggregateKpi(
+  rows: ZoneDaily[], workerRows: WorkerActivityRow[], attendance: AttendanceRecord[],
+): KpiResult {
   let amount = 0, box = 0, wave = 0, wms = 0, wmsAmt = 0, wmsBox = 0
   const zoneSet = new Set<string>()
   for (const r of rows) {
@@ -48,14 +57,17 @@ function aggregateKpi(rows: ZoneDaily[]): KpiResult {
       wmsBox += r.pick_box    ?? 0
     }
   }
+  const { hours: attHr, hasAny: hasAtt } = sumAttendanceHours(workerRows, attendance)
   return {
     amount: amount / 1_000_000,
-    box, wave, wms,
+    box, wave, wms, att: hasAtt ? attHr : null,
     zones: zoneSet.size,
-    amtPerHr:       wave > 0 ? (amount / 1_000_000) / wave : 0,
-    boxPerHr:       wave > 0 ? box / wave : 0,
     amtPerHrWms:    wms > 0 ? (wmsAmt / 1_000_000) / wms : null,
     boxPerHrWms:    wms > 0 ? wmsBox / wms : null,
+    amtPerHrAtt:    hasAtt && attHr > 0 ? (amount / 1_000_000) / attHr : null,
+    boxPerHrAtt:    hasAtt && attHr > 0 ? box / attHr : null,
+    amtPerHr:       wave > 0 ? (amount / 1_000_000) / wave : 0,
+    boxPerHr:       wave > 0 ? box / wave : 0,
   }
 }
 
@@ -233,21 +245,25 @@ function CenterCard({ center, kpi, metric, onClick }: {
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-gray-50 rounded-lg px-3 py-2">
             <p className="text-[10px] text-gray-400 mb-0.5">시간당 금액</p>
-            <p className="text-sm font-semibold text-gray-700">{fmtM(kpi.amtPerHr)}/h</p>
-            {kpi.amtPerHrWms != null && (
-              <p className="text-[10px] text-gray-400 mt-0.5">WMS {fmtM(kpi.amtPerHrWms)}/h</p>
-            )}
+            <p className="text-sm font-semibold text-gray-700">
+              {kpi.amtPerHrWms != null ? `${fmtM(kpi.amtPerHrWms)}/h` : '-'}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5">
+              근태 {kpi.amtPerHrAtt != null ? `${fmtM(kpi.amtPerHrAtt)}/h` : '미입력'} · 작업 {fmtM(kpi.amtPerHr)}/h
+            </p>
           </div>
           <div className="bg-gray-50 rounded-lg px-3 py-2">
             <p className="text-[10px] text-gray-400 mb-0.5">시간당 박스</p>
-            <p className="text-sm font-semibold text-gray-700">{fmtNum(Math.round(kpi.boxPerHr))}박스/h</p>
-            {kpi.boxPerHrWms != null && (
-              <p className="text-[10px] text-gray-400 mt-0.5">WMS {fmtNum(Math.round(kpi.boxPerHrWms))}박스/h</p>
-            )}
+            <p className="text-sm font-semibold text-gray-700">
+              {kpi.boxPerHrWms != null ? `${fmtNum(Math.round(kpi.boxPerHrWms))}박스/h` : '-'}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5">
+              근태 {kpi.boxPerHrAtt != null ? `${fmtNum(Math.round(kpi.boxPerHrAtt))}박스/h` : '미입력'} · 작업 {fmtNum(Math.round(kpi.boxPerHr))}박스/h
+            </p>
           </div>
         </div>
         <div className="flex gap-4 mt-3 text-xs text-gray-400">
-          <span>작업시간 {kpi.wave.toFixed(0)}h</span>
+          <span>WMS {kpi.wms.toFixed(0)}h</span>
           <span>·</span>
           <span>구역 {kpi.zones}개</span>
         </div>
@@ -286,24 +302,28 @@ function OwnerCard({ owner, kpi, metric, onClick }: {
           <div className="flex justify-between items-start">
             <span className="text-gray-400">시간당 금액</span>
             <div className="text-right">
-              <span className="font-medium text-gray-700">{fmtM(kpi.amtPerHr)}/h</span>
-              {kpi.amtPerHrWms != null && (
-                <span className="block text-[10px] text-gray-400">WMS {fmtM(kpi.amtPerHrWms)}/h</span>
-              )}
+              <span className="font-medium text-gray-700">
+                {kpi.amtPerHrWms != null ? `${fmtM(kpi.amtPerHrWms)}/h` : '-'}
+              </span>
+              <span className="block text-[10px] text-gray-400">
+                근태 {kpi.amtPerHrAtt != null ? `${fmtM(kpi.amtPerHrAtt)}/h` : '미입력'} · 작업 {fmtM(kpi.amtPerHr)}/h
+              </span>
             </div>
           </div>
           <div className="flex justify-between items-start">
             <span className="text-gray-400">시간당 박스</span>
             <div className="text-right">
-              <span className="font-medium text-gray-700">{fmtNum(Math.round(kpi.boxPerHr))}박스/h</span>
-              {kpi.boxPerHrWms != null && (
-                <span className="block text-[10px] text-gray-400">WMS {fmtNum(Math.round(kpi.boxPerHrWms))}박스/h</span>
-              )}
+              <span className="font-medium text-gray-700">
+                {kpi.boxPerHrWms != null ? `${fmtNum(Math.round(kpi.boxPerHrWms))}박스/h` : '-'}
+              </span>
+              <span className="block text-[10px] text-gray-400">
+                근태 {kpi.boxPerHrAtt != null ? `${fmtNum(Math.round(kpi.boxPerHrAtt))}박스/h` : '미입력'} · 작업 {fmtNum(Math.round(kpi.boxPerHr))}박스/h
+              </span>
             </div>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">작업시간</span>
-            <span className="font-medium text-gray-700">{kpi.wave.toFixed(0)}h</span>
+            <span className="text-gray-400">WMS시간</span>
+            <span className="font-medium text-gray-700">{kpi.wms.toFixed(0)}h</span>
           </div>
         </div>
         {onClick && (
@@ -319,9 +339,11 @@ function OwnerCard({ owner, kpi, metric, onClick }: {
 /* ── 메인 ── */
 export default function Overview({ period, metric, granularity = 'month' }: Props) {
   const { rows, loading } = useAllZoneData()
+  const { rows: workerRows, loading: workerLoading } = useAllWorkerData()
+  const { rows: attendance, loading: attLoading } = useAllAttendanceData()
   const navigate = useNavigate()
 
-  if (loading) {
+  if (loading || workerLoading || attLoading) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-400">
         <div className="text-center">
@@ -334,14 +356,23 @@ export default function Overview({ period, metric, granularity = 'month' }: Prop
 
   const { start, end } = periodToRange(period)
   const pRows = rows.filter(r => r.work_date >= start && r.work_date <= end)
+  const pWorkerRows = workerRows.filter(r => r.work_date >= start && r.work_date <= end)
   const isAmt = metric === 'amount'
 
-  const total = aggregateKpi(pRows)
+  const total = aggregateKpi(pRows, pWorkerRows, attendance)
   const centerKpi = Object.fromEntries(
-    CENTERS.map(c => [c, aggregateKpi(pRows.filter(r => CENTER_OWNERS[c].includes(r.owner)))])
+    CENTERS.map(c => [c, aggregateKpi(
+      pRows.filter(r => CENTER_OWNERS[c].includes(r.owner)),
+      pWorkerRows.filter(r => CENTER_OWNERS[c].includes(r.owner)),
+      attendance,
+    )])
   )
   const ownerKpi = Object.fromEntries(
-    OWNERS.map(o => [o, aggregateKpi(pRows.filter(r => r.owner === o))])
+    OWNERS.map(o => [o, aggregateKpi(
+      pRows.filter(r => r.owner === o),
+      pWorkerRows.filter(r => r.owner === o),
+      attendance,
+    )])
   )
 
   // 추이 차트 데이터: 일별은 '선택일이 속한 주(금~목)'의 근무일 전체를 막대로,
@@ -415,9 +446,12 @@ export default function Overview({ period, metric, granularity = 'month' }: Prop
           color="#6366f1"
         />
         <KpiCard
-          label="총 작업시간"
-          value={`${fmtNum(Math.round(total.wave))}h`}
-          sub={total.wms > 0 ? `WMS ${fmtNum(Math.round(total.wms))}h` : undefined}
+          label="총 WMS시간"
+          value={`${fmtNum(Math.round(total.wms))}h`}
+          sub={[
+            total.att != null ? `근태 ${fmtNum(Math.round(total.att))}h` : null,
+            `작업시간 ${fmtNum(Math.round(total.wave))}h`,
+          ].filter(Boolean).join(' · ')}
           color="#0ea5e9"
         />
         <Card>
@@ -425,19 +459,30 @@ export default function Overview({ period, metric, granularity = 'month' }: Prop
             <p className="text-xs text-muted-foreground font-medium mb-3">시간당 피킹 생산성</p>
             <div className="space-y-2.5">
               <div>
-                <p className="text-[10px] text-muted-foreground mb-0.5">작업시간 기준</p>
-                <p className="text-xl font-bold text-sky-500 leading-none">
-                  {fmtM(total.amtPerHr)}/h
-                  <span className="text-sm font-medium text-muted-foreground ml-2">· {fmtNum(Math.round(total.boxPerHr))}박스/h</span>
-                </p>
-              </div>
-              <div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">WMS기준</p>
-                <p className="text-xl font-bold text-sky-300 leading-none">
+                <p className="text-xl font-bold text-sky-500 leading-none">
                   {total.amtPerHrWms != null ? `${fmtM(total.amtPerHrWms)}/h` : '-'}
                   <span className="text-sm font-medium text-muted-foreground ml-2">
                     · {total.boxPerHrWms != null ? `${fmtNum(Math.round(total.boxPerHrWms))}박스/h` : '-'}
                   </span>
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground mb-0.5">근태시간 기준</p>
+                <p className="text-sm font-semibold text-muted-foreground leading-none">
+                  {total.amtPerHrAtt != null ? `${fmtM(total.amtPerHrAtt)}/h` : '미입력'}
+                  {total.amtPerHrAtt != null && (
+                    <span className="text-xs font-medium text-muted-foreground ml-2">
+                      · {fmtNum(Math.round(total.boxPerHrAtt!))}박스/h
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground mb-0.5">작업시간 기준</p>
+                <p className="text-sm font-semibold text-muted-foreground leading-none">
+                  {fmtM(total.amtPerHr)}/h
+                  <span className="text-xs font-medium text-muted-foreground ml-2">· {fmtNum(Math.round(total.boxPerHr))}박스/h</span>
                 </p>
               </div>
             </div>

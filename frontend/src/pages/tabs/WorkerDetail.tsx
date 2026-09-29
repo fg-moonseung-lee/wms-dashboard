@@ -151,8 +151,8 @@ function WorkerTable({ workers, metric, onSelect }: {
             <th className="text-left py-2 px-3 text-gray-400 font-medium">구역</th>
             <th className="text-left py-2 px-3 text-gray-400 font-medium">시프트</th>
             <th className="text-right py-2 px-3 text-gray-400 font-medium">{isAmt ? '금액(백만)' : '박스수'}</th>
-            <th className="text-right py-2 px-3 text-gray-400 font-medium">작업시간</th>
             <th className="text-right py-2 px-3 text-gray-400 font-medium">WMS시간</th>
+            <th className="text-right py-2 px-3 text-gray-400 font-medium">작업시간</th>
           </tr>
         </thead>
         <tbody>
@@ -169,8 +169,8 @@ function WorkerTable({ workers, metric, onSelect }: {
               <td className="py-2 px-3 text-right text-gray-700">
                 {isAmt ? fmtM(w.pick_amount / 1_000_000) : fmtNum(w.pick_box)}
               </td>
-              <td className="py-2 px-3 text-right text-gray-500">{w.wave_time_hr.toFixed(1)}h</td>
               <td className="py-2 px-3 text-right text-gray-500">{w.wms_time_hr.toFixed(1)}h</td>
+              <td className="py-2 px-3 text-right text-gray-500">{w.wave_time_hr.toFixed(1)}h</td>
             </tr>
           ))}
         </tbody>
@@ -198,14 +198,15 @@ function WorkerDailyDetail({ daily, metric, attendance }: {
   }))
 
   const totalWave = daily.reduce((s, d) => s + d.wave_time_hr, 0)
+  const totalWms  = daily.reduce((s, d) => s + d.wms_time_hr, 0)
   const totalAtt  = daily.reduce((s, d) => s + (attendance.get(d.work_date) ?? 0), 0)
   const attCount  = daily.filter(d => attendance.has(d.work_date)).length
 
   return (
     <div className="space-y-4">
-      {/* 요약 */}
+      {/* 요약 — 1순위 WMS시간 · 2순위 근무시간(근태) · 3순위 작업시간(wave) */}
       <div className="flex gap-6 text-xs">
-        <div><span className="text-gray-400">작업시간 합계 </span><span className="font-bold text-gray-700">{totalWave.toFixed(1)}h</span></div>
+        <div><span className="text-gray-400">WMS시간 합계 </span><span className="font-bold text-gray-700">{totalWms.toFixed(1)}h</span></div>
         <div>
           <span className="text-gray-400">근무시간 합계 </span>
           <span className="font-bold text-gray-700">
@@ -215,6 +216,7 @@ function WorkerDailyDetail({ daily, metric, attendance }: {
             <span className="text-gray-300"> ({attCount}/{daily.length}일)</span>
           )}
         </div>
+        <div><span className="text-gray-400">작업시간 합계 </span><span className="font-bold text-gray-700">{totalWave.toFixed(1)}h</span></div>
         <div><span className="text-gray-400">가동일수 </span><span className="font-bold text-gray-700">{daily.length}일</span></div>
         <div>
           <span className="text-gray-400">{isAmt ? '총 금액 ' : '총 박스 '}</span>
@@ -226,9 +228,9 @@ function WorkerDailyDetail({ daily, metric, attendance }: {
         </div>
       </div>
 
-      {/* 작업시간 일별 차트 */}
+      {/* WMS시간 일별 차트 */}
       <div>
-        <p className="text-xs font-semibold text-gray-600 mb-2">일별 작업시간 추이 (h)</p>
+        <p className="text-xs font-semibold text-gray-600 mb-2">일별 WMS시간 추이 (h)</p>
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -244,7 +246,7 @@ function WorkerDailyDetail({ daily, metric, attendance }: {
                 />
               )}
             />
-            <Bar dataKey="wave" fill="#FF6B35" radius={[3,3,0,0]} maxBarSize={32}
+            <Bar dataKey="wms" fill="#FF6B35" radius={[3,3,0,0]} maxBarSize={32}
               label={false}
             />
           </BarChart>
@@ -258,9 +260,9 @@ function WorkerDailyDetail({ daily, metric, attendance }: {
             <tr className="border-b border-gray-100">
               <th className="text-left py-1.5 px-2 text-gray-400 font-medium">날짜</th>
               <th className="text-right py-1.5 px-2 text-gray-400 font-medium">{isAmt ? '금액(백만)' : '박스수'}</th>
-              <th className="text-right py-1.5 px-2 text-gray-400 font-medium">작업시간</th>
               <th className="text-right py-1.5 px-2 text-gray-400 font-medium">WMS시간</th>
               <th className="text-right py-1.5 px-2 text-gray-400 font-medium">근무시간</th>
+              <th className="text-right py-1.5 px-2 text-gray-400 font-medium">작업시간</th>
             </tr>
           </thead>
           <tbody>
@@ -272,9 +274,9 @@ function WorkerDailyDetail({ daily, metric, attendance }: {
                   <td className="py-1.5 px-2 text-right text-gray-700">
                     {isAmt ? fmtM(d.pick_amount / 1_000_000) : fmtNum(d.pick_box)}
                   </td>
-                  <td className="py-1.5 px-2 text-right text-gray-500">{d.wave_time_hr.toFixed(1)}h</td>
                   <td className="py-1.5 px-2 text-right text-gray-500">{d.wms_time_hr.toFixed(1)}h</td>
                   <td className="py-1.5 px-2 text-right text-gray-500">{att != null ? `${att.toFixed(1)}h` : '미입력'}</td>
+                  <td className="py-1.5 px-2 text-right text-gray-500">{d.wave_time_hr.toFixed(1)}h</td>
                 </tr>
               )
             })}

@@ -129,6 +129,27 @@ export function stripTag(name: string): string {
   return name.replace(_TAG_RE, '').trim()
 }
 
+/** 주어진 범위(구역/브랜드/센터 등으로 이미 필터링된 작업자 활동 행)에서 실제 활동한
+ *  (날짜, 작업자) 조합을 중복 없이 뽑아 그만큼의 attendance_daily.hours를 합산한다 —
+ *  한 사람이 여러 구역에 걸쳐 있어도 근태는 하루 1건이라 이중합산되지 않도록 함. */
+export function sumAttendanceHours(
+  activeRows: { work_date: string; worker_name: string }[],
+  attendance: { work_date: string; worker_name: string; hours: number }[],
+): { hours: number; hasAny: boolean } {
+  const attMap = new Map(attendance.map(a => [`${a.work_date}|${a.worker_name}`, a.hours]))
+  const seen = new Set<string>()
+  let total = 0
+  let hasAny = false
+  for (const r of activeRows) {
+    const key = `${r.work_date}|${stripTag(r.worker_name)}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    const h = attMap.get(key)
+    if (h != null) { total += h; hasAny = true }
+  }
+  return { hours: total, hasAny }
+}
+
 // zone → 도급사 (피킹). DPS는 일룸 zone이지만 반품/AS/DPC피킹 전담 도급사가 따로 있음.
 export const CONTRACTOR_ZONE: Record<string, string> = {
   'H-I': 'IPC', 'C-D': 'IPC', 'A-P': 'IPC',

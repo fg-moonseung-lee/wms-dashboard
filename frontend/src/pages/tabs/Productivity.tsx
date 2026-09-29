@@ -3,9 +3,11 @@ import {
   ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { useAllZoneData } from '../../hooks/useAllZoneData'
+import { useAllWorkerData } from '../../hooks/useAllWorkerData'
+import { useAllAttendanceData } from '../../hooks/useAllAttendanceData'
 import { periodToRange, dateToBucket, bucketLabel } from '../../lib/weekUtils'
 import type { Granularity } from '../../lib/weekUtils'
-import { OWNER_COLOR, OWNERS } from '../../lib/supabase'
+import { OWNER_COLOR, OWNERS, sumAttendanceHours } from '../../lib/supabase'
 import type { ZoneDaily } from '../../lib/supabase'
 import type { Period } from '../../lib/types'
 import type { Metric } from './Overview'
@@ -38,56 +40,61 @@ function SectionCard({ title, subtitle, children }: {
   )
 }
 
-/* ── 브랜드별 시간당 생산성 추이 (전체 데이터, granularity) ── */
+/* ── 브랜드별 시간당 생산성 추이 (전체 데이터, granularity) — WMS시간 기준 ── */
 function weeklyPphByOwner(rows: ZoneDaily[], metric: Metric, gran: Granularity) {
   const scale = metric === 'amount' ? 1_000_000 : 1
-  const map = new Map<string, Map<string, { val: number; wave: number }>>()
+  const map = new Map<string, Map<string, { val: number; wms: number }>>()
   for (const r of rows) {
     const bucket = dateToBucket(r.work_date, gran)
     if (!map.has(bucket)) map.set(bucket, new Map())
     const bm = map.get(bucket)!
-    if (!bm.has(r.owner)) bm.set(r.owner, { val: 0, wave: 0 })
+    if (!bm.has(r.owner)) bm.set(r.owner, { val: 0, wms: 0 })
     const e = bm.get(r.owner)!
-    e.val  += metricVal(r, metric) / scale
-    e.wave += r.wave_time_hr ?? 0
+    e.val += metricVal(r, metric) / scale
+    if (r.wms_time_hr != null && r.wms_time_hr > 0) e.wms += r.wms_time_hr
   }
   return [...map.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([bucket, bm]) => ({
       label: bucketLabel(bucket, gran),
       ...Object.fromEntries(OWNERS.map(o => {
-        const e = bm.get(o) ?? { val: 0, wave: 0 }
-        return [o, e.wave > 0 ? +(e.val / e.wave).toFixed(3) : null]
+        const e = bm.get(o) ?? { val: 0, wms: 0 }
+        return [o, e.wms > 0 ? +(e.val / e.wms).toFixed(3) : null]
       })),
     }))
 }
 
-/* ── 구역별 시간당 생산성 집계 (작업시간 기준) ── */
+/* ── 구역별 시간당 생산성 집계 (WMS시간 기준) ── */
 interface ZonePphRow {
-  zone: string; owner: string; pph: number; val: number; wave: number
+  zone: string; owner: string; pph: number; val: number; wms: number
 }
 function zonePph(rows: ZoneDaily[], metric: Metric): ZonePphRow[] {
   const scale = metric === 'amount' ? 1_000_000 : 1
   const map = new Map<string, ZonePphRow>()
   for (const r of rows) {
     const key = `${r.owner}|${r.zone}`
-    if (!map.has(key)) map.set(key, { zone: r.zone, owner: r.owner, pph: 0, val: 0, wave: 0 })
+    if (!map.has(key)) map.set(key, { zone: r.zone, owner: r.owner, pph: 0, val: 0, wms: 0 })
     const e = map.get(key)!
-    e.val  += metricVal(r, metric) / scale
-    e.wave += r.wave_time_hr ?? 0
+    e.val += metricVal(r, metric) / scale
+    if (r.wms_time_hr != null && r.wms_time_hr > 0) e.wms += r.wms_time_hr
   }
   return [...map.values()]
-    .map(e => ({ ...e, pph: e.wave > 0 ? e.val / e.wave : 0 }))
+    .map(e => ({ ...e, pph: e.wms > 0 ? e.val / e.wms : 0 }))
     .sort((a, b) => b.pph - a.pph)
 }
 
-/* ── 구역별 작업시간 기준 vs WMS기준 생산성 비교 ── */
+/* ── 구역별 WMS/근태/작업시간 3단계 생산성 비교 ── */
 interface ZoneWmsRow {
   zone: string; owner: string
-  wave: number; wms: number; val: number
-  pphWave: number; pphWms: number
+  wave: number; wms: number; att: number | null; val: number
+  pphWave: number; pphWms: number; pphAtt: number | null
 }
-function zoneWmsComparison(rows: ZoneDaily[], metric: Metric): ZoneWmsRow[] {
+function zoneWmsComparison(
+  rows: ZoneDaily[],
+  workerRows: { zone: string; owner: string; worker_name: string; work_date: string }[],
+  attendance: { work_date: string; worker_name: string; hours: number }[],
+  metric: Metric,
+): ZoneWmsRow[] {
   const scale = metric === 'amount' ? 1_000_000 : 1
   const map = new Map<string, { zone: string; owner: string; wave: number; wms: number; val: number }>()
   for (const r of rows) {
@@ -100,34 +107,41 @@ function zoneWmsComparison(rows: ZoneDaily[], metric: Metric): ZoneWmsRow[] {
   }
   return [...map.values()]
     .filter(e => e.wms > 0)
-    .map(e => ({
-      ...e,
-      pphWave: e.wave > 0 ? e.val / e.wave : 0,
-      pphWms:  e.wms > 0 ? e.val / e.wms : 0,
-    }))
-    .sort((a, b) => b.pphWave - a.pphWave)
+    .map(e => {
+      const { hours: attHr, hasAny } = sumAttendanceHours(
+        workerRows.filter(w => w.owner === e.owner && w.zone === e.zone), attendance,
+      )
+      return {
+        ...e,
+        att: hasAny ? attHr : null,
+        pphWave: e.wave > 0 ? e.val / e.wave : 0,
+        pphWms:  e.wms > 0 ? e.val / e.wms : 0,
+        pphAtt:  hasAny && attHr > 0 ? e.val / attHr : null,
+      }
+    })
+    .sort((a, b) => b.pphWms - a.pphWms)
 }
 
-/* ── 브랜드별 시간당 피킹 (전체 데이터, granularity) — 그룹 바용 ── */
+/* ── 브랜드별 시간당 피킹 (전체 데이터, granularity) — 그룹 바용, WMS시간 기준 ── */
 function pickPerHourByBrand(rows: ZoneDaily[], metric: Metric, gran: Granularity) {
   const scale = metric === 'amount' ? 1_000_000 : 1
-  const map = new Map<string, Map<string, { val: number; wave: number }>>()
+  const map = new Map<string, Map<string, { val: number; wms: number }>>()
   for (const r of rows) {
     const bucket = dateToBucket(r.work_date, gran)
     if (!map.has(bucket)) map.set(bucket, new Map())
     const bm = map.get(bucket)!
-    if (!bm.has(r.owner)) bm.set(r.owner, { val: 0, wave: 0 })
+    if (!bm.has(r.owner)) bm.set(r.owner, { val: 0, wms: 0 })
     const e = bm.get(r.owner)!
-    e.val  += metricVal(r, metric) / scale
-    e.wave += r.wave_time_hr ?? 0
+    e.val += metricVal(r, metric) / scale
+    if (r.wms_time_hr != null && r.wms_time_hr > 0) e.wms += r.wms_time_hr
   }
   return [...map.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([bucket, bm]) => ({
       label: bucketLabel(bucket, gran),
       ...Object.fromEntries(OWNERS.map(o => {
-        const e = bm.get(o) ?? { val: 0, wave: 0 }
-        return [o, e.wave > 0 ? +(e.val / e.wave).toFixed(3) : null]
+        const e = bm.get(o) ?? { val: 0, wms: 0 }
+        return [o, e.wms > 0 ? +(e.val / e.wms).toFixed(3) : null]
       })),
     }))
 }
@@ -135,8 +149,10 @@ function pickPerHourByBrand(rows: ZoneDaily[], metric: Metric, gran: Granularity
 /* ── 메인 컴포넌트 ── */
 export default function Productivity({ period, metric, granularity }: Props) {
   const { rows, loading } = useAllZoneData()
+  const { rows: workerRows, loading: workerLoading } = useAllWorkerData()
+  const { rows: attendance, loading: attLoading } = useAllAttendanceData()
 
-  if (loading) {
+  if (loading || workerLoading || attLoading) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-400">
         <div className="text-center">
@@ -149,6 +165,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
 
   const { start, end } = periodToRange(period)
   const pRows = rows.filter(r => r.work_date >= start && r.work_date <= end)
+  const pWorkerRows = workerRows.filter(r => r.work_date >= start && r.work_date <= end)
   const isAmt = metric === 'amount'
   const unit = isAmt ? '백만원' : '박스'
   const granLabel = granularity === 'day' ? '일별' : granularity === 'week' ? '주간' : '월간'
@@ -164,15 +181,17 @@ export default function Productivity({ period, metric, granularity }: Props) {
       totalValWms += metricVal(r, metric) / scale
     }
   }
+  const { hours: totalAtt, hasAny: hasAtt } = sumAttendanceHours(pWorkerRows, attendance)
   const pickPerHr    = totalWave > 0 ? totalVal / totalWave : 0
   const pickPerHrWms = totalWms > 0 ? totalValWms / totalWms : null
+  const pickPerHrAtt = hasAtt && totalAtt > 0 ? totalVal / totalAtt : null
 
   /* 차트 데이터 — 일별은 선택 기간, 주간/월간은 전체 기반 */
   const chartRows = granularity === 'day' ? pRows : rows
   const pphTrendByOwner = weeklyPphByOwner(chartRows, metric, granularity)
   const zonePphRows     = zonePph(pRows, metric)   // 구역별 시간당생산성은 기간 기준 유지
   const pphTrend        = pickPerHourByBrand(chartRows, metric, granularity)
-  const zoneWms         = zoneWmsComparison(pRows, metric)
+  const zoneWms         = zoneWmsComparison(pRows, pWorkerRows, attendance, metric)
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -181,10 +200,10 @@ export default function Productivity({ period, metric, granularity }: Props) {
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-5">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">총 작업시간</p>
-            <p className="text-2xl font-bold text-sky-600">{totalWave.toFixed(0)}h</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">총 WMS시간</p>
+            <p className="text-2xl font-bold text-sky-600">{totalWms.toFixed(0)}h</p>
             <p className="text-xs text-muted-foreground mt-1">
-              WMS {totalWms > 0 ? totalWms.toFixed(0) + 'h' : '-'}
+              근태 {hasAtt ? totalAtt.toFixed(0) + 'h' : '미입력'} · 작업 {totalWave.toFixed(0)}h
             </p>
           </CardContent>
         </Card>
@@ -194,12 +213,16 @@ export default function Productivity({ period, metric, granularity }: Props) {
               시간당 피킹 ({unit}/h)
             </p>
             <p className="text-2xl font-bold text-[#FF6B35]">
-              {isAmt ? fmtM(pickPerHr) : fmtBox(Math.round(pickPerHr))}
+              {pickPerHrWms != null ? (isAmt ? fmtM(pickPerHrWms) : fmtBox(Math.round(pickPerHrWms))) : '-'}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              작업시간 기준 · WMS기준&nbsp;
+              WMS기준 · 근태기준&nbsp;
               <span className="font-medium text-foreground">
-                {pickPerHrWms != null ? (isAmt ? fmtM(pickPerHrWms) : fmtBox(Math.round(pickPerHrWms))) : '-'}
+                {pickPerHrAtt != null ? (isAmt ? fmtM(pickPerHrAtt) : fmtBox(Math.round(pickPerHrAtt))) : '미입력'}
+              </span>
+              &nbsp;· 작업기준&nbsp;
+              <span className="font-medium text-foreground">
+                {isAmt ? fmtM(pickPerHr) : fmtBox(Math.round(pickPerHr))}
               </span>
             </p>
           </CardContent>
@@ -214,7 +237,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
       </div>
 
       {/* 브랜드별 시간당 생산성 추이 — 전체 히스토리 */}
-      <SectionCard title={`브랜드별 시간당 생산성 ${granLabel} 추이 (${unit}/h)`} subtitle="작업시간 기준">
+      <SectionCard title={`브랜드별 시간당 생산성 ${granLabel} 추이 (${unit}/h)`} subtitle="WMS시간 기준">
         {pphTrendByOwner.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-gray-300 text-xs">데이터 없음</div>
         ) : (
@@ -254,7 +277,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
       <div className="grid grid-cols-2 gap-5">
 
         {/* 구역별 시간당 생산성 수평 막대 — 선택 기간 기준 */}
-        <SectionCard title={`구역별 시간당 생산성 비교 (${unit}/h)`} subtitle="작업시간 기준 · 높은 순">
+        <SectionCard title={`구역별 시간당 생산성 비교 (${unit}/h)`} subtitle="WMS시간 기준 · 높은 순">
           {zonePphRows.length === 0 ? (
             <div className="flex items-center justify-center h-40 text-gray-300 text-xs">데이터 없음</div>
           ) : (
@@ -297,7 +320,7 @@ export default function Productivity({ period, metric, granularity }: Props) {
         {/* 브랜드별 시간당 피킹 — 그룹 바, 전체 히스토리 */}
         <SectionCard
           title={`브랜드별 시간당 피킹 ${granLabel} 추이 (${unit}/h)`}
-          subtitle="작업시간 기준"
+          subtitle="WMS시간 기준"
         >
           {pphTrend.length === 0 ? (
             <div className="flex items-center justify-center h-40 text-gray-300 text-xs">데이터 없음</div>
@@ -334,18 +357,20 @@ export default function Productivity({ period, metric, granularity }: Props) {
       {zoneWms.length > 0 && (
         <SectionCard
           title={`구역별 생산성 비교 (${unit}/h)`}
-          subtitle="작업시간 기준 vs WMS 근무시간 기준"
+          subtitle="WMS · 근태 · 작업시간 기준"
         >
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border text-muted-foreground">
                   <th className="text-left pb-2 pr-3 font-medium">구역</th>
-                  <th className="text-right pb-2 pr-3 font-medium">작업시간</th>
                   <th className="text-right pb-2 pr-3 font-medium">WMS시간</th>
+                  <th className="text-right pb-2 pr-3 font-medium">근태시간</th>
+                  <th className="text-right pb-2 pr-3 font-medium">작업시간</th>
                   <th className="text-right pb-2 pr-3 font-medium">몰입률</th>
-                  <th className="text-right pb-2 pr-3 font-medium">작업시간기준</th>
-                  <th className="text-right pb-2 font-medium">WMS기준</th>
+                  <th className="text-right pb-2 pr-3 font-medium">WMS기준</th>
+                  <th className="text-right pb-2 pr-3 font-medium">근태기준</th>
+                  <th className="text-right pb-2 font-medium">작업기준</th>
                 </tr>
               </thead>
               <tbody>
@@ -359,16 +384,20 @@ export default function Productivity({ period, metric, granularity }: Props) {
                         <span className="font-medium">{z.zone}</span>
                         <span className="text-muted-foreground ml-1.5 text-[10px]">{z.owner}</span>
                       </td>
-                      <td className="py-1.5 pr-3 text-right tabular-nums">{z.wave.toFixed(0)}h</td>
                       <td className="py-1.5 pr-3 text-right tabular-nums">{z.wms.toFixed(0)}h</td>
+                      <td className="py-1.5 pr-3 text-right tabular-nums">{z.att != null ? `${z.att.toFixed(0)}h` : '미입력'}</td>
+                      <td className="py-1.5 pr-3 text-right tabular-nums">{z.wave.toFixed(0)}h</td>
                       <td className="py-1.5 pr-3 text-right tabular-nums font-medium" style={{ color: ratioColor }}>
                         {ratio != null ? ratio.toFixed(1) + '%' : '-'}
                       </td>
                       <td className="py-1.5 pr-3 text-right tabular-nums font-semibold text-[#FF6B35]">
-                        {fmtVal(z.pphWave)}
+                        {fmtVal(z.pphWms)}
+                      </td>
+                      <td className="py-1.5 pr-3 text-right tabular-nums text-muted-foreground">
+                        {z.pphAtt != null ? fmtVal(z.pphAtt) : '미입력'}
                       </td>
                       <td className="py-1.5 text-right tabular-nums text-muted-foreground">
-                        {fmtVal(z.pphWms)}
+                        {fmtVal(z.pphWave)}
                       </td>
                     </tr>
                   )
