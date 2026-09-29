@@ -2,10 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import PickingLayout from './pages/picking/PickingLayout'
 import OverviewPage from './pages/picking/OverviewPage'
-import BrandPage from './pages/picking/BrandPage'
 import ProductivityPage from './pages/picking/ProductivityPage'
 import WorkerPage from './pages/picking/WorkerPage'
-import CenterPage from './pages/picking/CenterPage'
 import InboundLayout from './pages/inbound/InboundLayout'
 import InboundOverviewPage from './pages/inbound/OverviewPage'
 import InboundBrandPage from './pages/inbound/BrandPage'
@@ -26,10 +24,11 @@ export default function App() {
           <Route path="/picking" element={<PickingLayout />}>
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview"     element={<OverviewPage />} />
-            <Route path="brand"        element={<BrandPage />} />
             <Route path="productivity" element={<ProductivityPage />} />
             <Route path="worker"       element={<WorkerPage />} />
-            <Route path="center"       element={<CenterPage />} />
+            {/* 센터별/브랜드별 분석은 종합현황 안에 브레드크럼 드릴다운으로 흡수됨 */}
+            <Route path="brand"  element={<Navigate to="/picking/overview" replace />} />
+            <Route path="center" element={<Navigate to="/picking/overview" replace />} />
           </Route>
           <Route path="/inbound" element={<InboundLayout />}>
             <Route index element={<Navigate to="overview" replace />} />
