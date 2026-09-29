@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const SERVER_URL = 'http://localhost:8787'
 
@@ -24,17 +25,22 @@ function todayStr(): string {
 export default function Trigger() {
   const [date, setDate] = useState(todayStr())
   const [serverUp, setServerUp] = useState<boolean | null>(null)
+  const [checking, setChecking] = useState(false)
   const [jobStatus, setJobStatus] = useState<JobStatus>('idle')
   const [log, setLog] = useState<string[]>([])
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const pollRef = useRef<number | null>(null)
   const logBoxRef = useRef<HTMLPreElement | null>(null)
 
-  useEffect(() => {
+  function checkServer() {
+    setChecking(true)
     fetch(`${SERVER_URL}/api/health`)
       .then(r => setServerUp(r.ok))
       .catch(() => setServerUp(false))
-  }, [])
+      .finally(() => setChecking(false))
+  }
+
+  useEffect(() => { checkServer() }, [])
 
   useEffect(() => {
     if (logBoxRef.current) {
@@ -93,61 +99,77 @@ export default function Trigger() {
 
   const statusBadge = {
     idle: null,
-    running: <span className="text-blue-600 font-semibold">실행 중...</span>,
-    done: <span className="text-green-600 font-semibold">완료</span>,
-    error: <span className="text-red-600 font-semibold">오류 발생</span>,
+    running: <span className="text-[12px] font-semibold text-blue-600">실행 중...</span>,
+    done: <span className="text-[12px] font-semibold text-green-600">완료</span>,
+    error: <span className="text-[12px] font-semibold text-red-600">오류 발생</span>,
   }[jobStatus]
 
   return (
-    <div className="p-5">
-      <div className="max-w-[640px] mx-auto bg-white rounded-xl shadow-xl border border-gray-100 p-6">
-        <h2 className="text-[15px] font-bold text-gray-800 mb-1">생산성 집계 수동 실행</h2>
-        <p className="text-[12px] text-gray-400 mb-4">
-          선택한 날짜의 피킹+입고 데이터를 다시 수집해 DB에 반영합니다. RPA 자동 스케줄은 꺼져
-          있으므로, 명절/휴무일 등으로 자동 집계가 안 된 날짜는 여기서 수동으로 실행하세요.
-        </p>
+    <div className="p-5 space-y-5 animate-fade-in">
 
-        {serverUp === false && (
-          <div className="mb-4 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-[12px] text-amber-700">
-            로컬 트리거 서버에 연결할 수 없습니다. 이 기능은 자동화 PC에서 대시보드를 열었을 때만
-            동작합니다.
+      {/* 필터 바 */}
+      <Card>
+        <CardContent className="p-5">
+          <div className="flex flex-wrap items-end gap-4">
+            <div>
+              <label className="text-[10px] text-gray-400 block mb-1">집계 대상 날짜</label>
+              <input
+                type="date" value={date} onChange={e => setDate(e.target.value)}
+                disabled={jobStatus === 'running'}
+                className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-letusBlue disabled:opacity-50"
+              />
+            </div>
+            <button
+              onClick={handleTrigger}
+              disabled={jobStatus === 'running' || serverUp === false}
+              className="bg-letusBlue hover:bg-blue-600 text-white text-xs font-semibold py-1.5 px-4 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              집계 실행
+            </button>
+            {statusBadge}
+            <p className="text-[11px] text-gray-400 leading-relaxed ml-2 max-w-[480px]">
+              선택한 날짜의 피킹+입고 데이터를 다시 수집해 DB에 반영합니다. RPA 자동 스케줄은 꺼져
+              있으므로, 명절/휴무일 등으로 자동 집계가 안 된 날짜는 여기서 수동으로 실행하세요.
+            </p>
           </div>
-        )}
 
-        <div className="flex items-end gap-3 mb-4">
-          <div>
-            <label className="text-[10px] text-gray-400 block mb-1">집계 대상 날짜</label>
-            <input
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              disabled={jobStatus === 'running'}
-              className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-letusBlue disabled:opacity-50"
-            />
-          </div>
-          <button
-            onClick={handleTrigger}
-            disabled={jobStatus === 'running' || serverUp === false}
-            className="bg-letusBlue hover:bg-blue-600 text-white text-xs font-semibold py-1.5 px-4 rounded-lg disabled:opacity-40 transition-colors"
-          >
-            집계 실행
-          </button>
-          {statusBadge}
-        </div>
+          {serverUp === false && (
+            <div className="mt-4 flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+              <p className="text-[12px] text-amber-700">
+                로컬 트리거 서버에 연결할 수 없습니다. 이 기능은 자동화 PC에서 대시보드를 열었을 때만 동작합니다.
+              </p>
+              <button
+                onClick={checkServer}
+                disabled={checking}
+                className="shrink-0 text-[11px] font-semibold text-amber-700 border border-amber-300 rounded-lg px-2.5 py-1 hover:bg-amber-100 disabled:opacity-50 transition-colors"
+              >
+                {checking ? '확인 중...' : '다시 확인'}
+              </button>
+            </div>
+          )}
 
-        {errorMsg && (
-          <p className="text-[12px] text-red-500 mb-3">{errorMsg}</p>
-        )}
+          {errorMsg && (
+            <p className="text-[12px] text-red-500 mt-3">{errorMsg}</p>
+          )}
+        </CardContent>
+      </Card>
 
-        {log.length > 0 && (
-          <pre
-            ref={logBoxRef}
-            className="bg-gray-900 text-gray-200 text-[11px] leading-relaxed rounded-lg p-3 h-[320px] overflow-y-auto whitespace-pre-wrap"
-          >
-            {log.join('\n')}
-          </pre>
-        )}
-      </div>
+      {/* 실행 로그 */}
+      {log.length > 0 && (
+        <Card>
+          <CardHeader className="px-5 py-3.5 border-b border-border">
+            <CardTitle className="text-sm font-semibold">실행 로그</CardTitle>
+          </CardHeader>
+          <CardContent className="p-5">
+            <pre
+              ref={logBoxRef}
+              className="bg-gray-900 text-gray-200 text-[11px] leading-relaxed rounded-lg p-3 h-[420px] overflow-y-auto whitespace-pre-wrap"
+            >
+              {log.join('\n')}
+            </pre>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
