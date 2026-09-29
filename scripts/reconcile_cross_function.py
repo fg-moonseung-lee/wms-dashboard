@@ -43,7 +43,7 @@ load_dotenv(BASE_DIR / ".env")
 DB_URL = os.getenv("SUPABASE_POOLER_URL") or os.getenv("SUPABASE_DB_URL")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from picking_automation_v2 import _build_daily_frames          # noqa: E402
+from picking_automation_v2 import _build_daily_frames, _extract_shift, _break_deduction_hr  # noqa: E402
 from inbound_automation import load_inbound, load_moves, BRANDS, strip_tag  # noqa: E402
 
 
@@ -54,16 +54,24 @@ def _conn():
 
 
 def _load_picking_events(target) -> pd.DataFrame:
-    """(zone, worker, ts) — DPS 제외, worker는 태그 제거된 표시 이름."""
+    """(zone, worker, ts, brand, shift) — DPS 제외, worker는 태그 제거된 표시 이름.
+    brand/shift는 공식 휴게시간(BREAK_TIMES) 차감에 사용."""
     sd_f1, sd_i1, sd_d1, sd_du1 = _build_daily_frames(target)
-    frames = [sd[["B", "J", "K"]].rename(columns={"B": "zone", "J": "worker_raw", "K": "ts"})
-              for sd in (sd_f1, sd_i1, sd_d1, sd_du1) if not sd.empty]
+    labeled = [(sd_f1, "퍼시스"), (sd_i1, "일룸"), (sd_d1, "데스커"), (sd_du1, "3PL")]
+    frames = []
+    for sd, brand in labeled:
+        if sd.empty:
+            continue
+        sub = sd[["B", "J", "K"]].rename(columns={"B": "zone", "J": "worker_raw", "K": "ts"}).copy()
+        sub["brand"] = brand
+        frames.append(sub)
     if not frames:
-        return pd.DataFrame(columns=["zone", "worker", "ts"])
+        return pd.DataFrame(columns=["zone", "worker", "ts", "brand", "shift"])
     df = pd.concat(frames, ignore_index=True)
     df = df[df["zone"] != "DPS"]
     df["worker"] = df["worker_raw"].map(strip_tag)
-    return df[["zone", "worker", "ts"]]
+    df["shift"] = df["worker_raw"].map(_extract_shift)
+    return df[["zone", "worker", "ts", "brand", "shift"]]
 
 
 def _load_inbound_events(target) -> pd.DataFrame:
@@ -93,13 +101,13 @@ def reconcile(target):
     inbound = _load_inbound_events(target)
 
     picking = picking.assign(func="피킹", key=picking["zone"]) if not picking.empty \
-        else pd.DataFrame(columns=["worker", "ts", "func", "key"])
-    inbound = inbound.assign(func="입고", key=inbound["brand"]) if not inbound.empty \
-        else pd.DataFrame(columns=["worker", "ts", "func", "key"])
+        else pd.DataFrame(columns=["worker", "ts", "func", "key", "brand", "shift"])
+    inbound = inbound.assign(func="입고", key=inbound["brand"], shift=None) if not inbound.empty \
+        else pd.DataFrame(columns=["worker", "ts", "func", "key", "brand", "shift"])
 
     combined = pd.concat([
-        picking[["worker", "ts", "func", "key"]],
-        inbound[["worker", "ts", "func", "key"]],
+        picking[["worker", "ts", "func", "key", "brand", "shift"]],
+        inbound[["worker", "ts", "func", "key", "brand", "shift"]],
     ], ignore_index=True)
 
     picking_wms: dict = defaultdict(float)
@@ -126,7 +134,12 @@ def reconcile(target):
             func = rg["func"].iloc[0]
             target = picking_wms if func == "피킹" else inbound_hours
             for key, kg in rg.groupby("key"):
-                span_hr = (kg["ts"].max() - kg["ts"].min()).total_seconds() / 3600
+                span_start, span_end = kg["ts"].min(), kg["ts"].max()
+                span_hr = (span_end - span_start).total_seconds() / 3600
+                if func == "피킹":
+                    brand, shift = kg["brand"].iloc[0], kg["shift"].iloc[0]
+                    ded = _break_deduction_hr(span_start, span_end, list(kg["ts"]), brand, shift)
+                    span_hr = max(0.0, span_hr - ded)
                 target[(key, worker)] += span_hr
 
     return dict(picking_wms), dict(inbound_hours), cross_workers

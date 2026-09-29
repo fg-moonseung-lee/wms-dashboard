@@ -17,6 +17,7 @@ import subprocess
 import sys
 import time
 from datetime import date, datetime, timedelta
+from datetime import time as dtime
 from pathlib import Path
 
 import pandas as pd
@@ -504,8 +505,88 @@ def _build(df: pd.DataFrame, zone_fn, fixed_region: str | None = None,
     return pd.concat([rest_sorted, last_sorted]).reset_index(drop=True)
 
 
+# ── 공식 휴게시간 (WMS시간 차감용, 2026-09-29) ──────────────────────
+# 브랜드·근무형태별 공식 휴게/식사 시간대. WMS시간(첫 픽~마지막 픽 전체 span)이
+# 메인 지표가 되면서, 그 span 안에 낀 공식 휴게시간까지 "일한 시간"으로 잡히는
+# 문제를 바로잡기 위해 도입 — 다만 그 휴게시간대에 실제로 픽 이력이 있으면(=쉬지
+# 않고 계속 일함) 차감하지 않는다(check_from: 이 시각 이후 픽이 있으면 미차감).
+# date_ref="end": 자정을 넘기는 야식시간대는 span 종료일 기준으로 계산.
+def _brk(name: str, start: dtime, end: dtime, check_from: dtime | None = None, date_ref: str = "start") -> dict:
+    return {"name": name, "start": start, "end": end, "check_from": check_from, "date_ref": date_ref}
+
+
+BREAK_TIMES: dict = {
+    "일룸": {
+        "주간": [
+            _brk("점심", dtime(12, 10), dtime(13, 10)),
+            _brk("저녁", dtime(17, 30), dtime(18, 0), check_from=dtime(17, 40)),
+        ],
+        "야간": [
+            _brk("야식", dtime(1, 0), dtime(2, 0), date_ref="end"),
+        ],
+    },
+    "퍼시스": {
+        "주간": [
+            _brk("점심", dtime(12, 20), dtime(13, 10)),
+            _brk("저녁", dtime(17, 30), dtime(18, 0), check_from=dtime(17, 40)),
+        ],
+    },
+    "데스커": {
+        "주간": [
+            _brk("점심", dtime(12, 20), dtime(13, 20)),
+            _brk("저녁", dtime(17, 30), dtime(18, 0), check_from=dtime(17, 40)),
+        ],
+        "야간": [
+            _brk("야식", dtime(1, 0), dtime(2, 0), date_ref="end"),
+        ],
+        # 2센터 데스커 석간(2026-09-29 확인): 13~22시 근무, 휴게 15:00~15:10 · 20:00~20:10
+        # (10분씩, 15분으로 정정될 수 있음 — 확인 후 조정), 식사 17~18시(1시간).
+        "석간": [
+            _brk("휴게1", dtime(15, 0), dtime(15, 10)),
+            _brk("휴게2", dtime(20, 0), dtime(20, 10)),
+            _brk("식사", dtime(17, 0), dtime(18, 0)),
+        ],
+    },
+    "3PL": {
+        "주간": [
+            _brk("점심", dtime(12, 10), dtime(13, 0)),
+            _brk("저녁", dtime(17, 30), dtime(18, 0), check_from=dtime(17, 40)),
+        ],
+    },
+}
+
+_SHIFT_TAG_RE = re.compile(r"^\[([^\]]+)\]")
+
+
+def _extract_shift(worker_raw: str) -> str:
+    m = _SHIFT_TAG_RE.match(str(worker_raw))
+    return m.group(1) if m else "주간"
+
+
+def _break_deduction_hr(span_start: datetime, span_end: datetime, pick_times, brand: str, shift: str) -> float:
+    """span(첫 픽~마지막 픽) 안에 걸친 공식 휴게시간 중, 실제로 쉰(=그 시간대에 픽
+    이력이 없는) 시간만 골라 차감할 시간(h)을 반환. brand/shift에 정의된 휴게시간이
+    없으면 0.0(차감 없음)."""
+    break_list = BREAK_TIMES.get(brand, {}).get(shift, [])
+    if not break_list:
+        return 0.0
+    start_date, end_date = span_start.date(), span_end.date()
+    ded_min = 0.0
+    for br in break_list:
+        ref_date = start_date if br["date_ref"] == "start" else end_date
+        br_start = datetime.combine(ref_date, br["start"])
+        br_end   = datetime.combine(ref_date, br["end"])
+        if not (span_start < br_start < span_end):
+            continue
+        chk_start = datetime.combine(ref_date, br["check_from"]) if br["check_from"] else br_start
+        has_work = any(chk_start <= t < br_end for t in pick_times)
+        if not has_work:
+            ded_min += (br_end - br_start).total_seconds() / 60
+    return ded_min / 60
+
+
 # ── 작업시간 계산 (가동률/표준시간 대체, 2026-09-28) ──────────────────
-def _calc_wave_metrics(df: pd.DataFrame) -> dict:
+def _calc_wave_metrics(df: pd.DataFrame, brand: str | None = None) -> dict:
     """(zone, worker)별 wave_time_hr / wms_time_hr 계산 — 순수 Python, Excel 불필요.
 
     df는 _build()의 A~L 출력(B=zone, G=PLT_ID, H=WAVE번호, J=작업자, K=작업일시)이면
@@ -521,8 +602,10 @@ def _calc_wave_metrics(df: pd.DataFrame) -> dict:
       zone에서 멀티픽 wave가 하나도 없으면 zone 전체 평균 초/건으로 폴백, 그마저 없으면
       (zone 전체가 이 날 전부 solo-pick) 기존처럼 0 처리 — 추정 근거가 전혀 없는 극히
       드문 경우라 억지로 값을 만들지 않고 알려진 한계로 남긴다.
-    - wms_time_hr:  그 worker의 하루 전체 max(K)-min(K) — 첫 픽~마지막 픽 전체 span
-      (wave 경계 무시, 휴게시간 등 포함).
+    - wms_time_hr:  그 worker의 하루 전체 max(K)-min(K) — 첫 픽~마지막 픽 전체 span에서
+      공식 휴게/식사 시간(BREAK_TIMES, brand 지정 시) 중 실제로 쉰 시간만 차감한 값
+      (2026-09-29 추가 — WMS시간이 메인 지표가 되며 점심/휴게까지 근무로 잡히는 걸
+      바로잡음. brand=None이면 차감 없이 기존과 동일).
 
     반환: {(zone, worker): {"wave_time_hr": float, "wms_time_hr": float}}
     """
@@ -538,7 +621,11 @@ def _calc_wave_metrics(df: pd.DataFrame) -> dict:
         ks = g["K"].dropna()
         if len(ks) == 0:
             continue
-        wms_hr = (ks.max() - ks.min()).total_seconds() / 3600
+        span_start, span_end = ks.min(), ks.max()
+        wms_hr = (span_end - span_start).total_seconds() / 3600
+        if brand:
+            shift = _extract_shift(worker)
+            wms_hr = max(0.0, wms_hr - _break_deduction_hr(span_start, span_end, list(ks), brand, shift))
         wave_hr = 0.0
         solo_count  = 0
         multi_span  = 0.0
@@ -1067,8 +1154,8 @@ def process(target: date, from_master: bool = False) -> dict:
     # 불신), 이제 모든 구역/작업자에 대해 같은 방식(_calc_wave_metrics)을 씀.
     print("\n  [3] 작업시간 계산 (wave 기반)...")
     wave_metrics: dict = {}
-    for sd in (sd_f1, sd_i1, sd_d1, sd_du1):
-        wave_metrics.update(_calc_wave_metrics(sd))
+    for sd, brand in ((sd_f1, "퍼시스"), (sd_i1, "일룸"), (sd_d1, "데스커"), (sd_du1, "3PL")):
+        wave_metrics.update(_calc_wave_metrics(sd, brand))
     _total_wave = sum(v["wave_time_hr"] for v in wave_metrics.values())
     _total_wms  = sum(v["wms_time_hr"]  for v in wave_metrics.values())
     print(f"    {len(wave_metrics)}명(zone·worker) — 합계 wave={_total_wave:.1f}h, wms={_total_wms:.1f}h")
