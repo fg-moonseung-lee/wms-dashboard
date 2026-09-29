@@ -14,8 +14,6 @@ export interface InboundCtx {
 
 const PAGE_LABELS: Record<string, string> = {
   '/inbound/overview':     '종합현황',
-  '/inbound/center':       '센터별 분석',
-  '/inbound/brand':        '브랜드별 분석',
   '/inbound/productivity': '생산성 집계',
   '/inbound/worker':       '작업자별 상세',
 }

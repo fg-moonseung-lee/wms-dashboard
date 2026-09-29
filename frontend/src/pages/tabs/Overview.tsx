@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAllZoneData } from '../../hooks/useAllZoneData'
 import { useAllWorkerData } from '../../hooks/useAllWorkerData'
 import type { WorkerActivityRow } from '../../hooks/useAllWorkerData'
@@ -522,7 +522,13 @@ export default function Overview({ period, metric, granularity = 'month' }: Prop
   const { rows: workerRows, loading: workerLoading } = useAllWorkerData()
   const { rows: attendance, loading: attLoading } = useAllAttendanceData()
   const navigate = useNavigate()
-  const [crumb, setCrumb] = useState<Crumb>({ level: 'all' })
+  const location = useLocation()
+  const [crumb, setCrumb] = useState<Crumb>(() => {
+    const st = location.state as { owner?: string; center?: string } | null
+    if (st?.owner) return { level: 'brand', owner: st.owner }
+    if (st?.center) return { level: 'center', center: st.center }
+    return { level: 'all' }
+  })
 
   if (loading || workerLoading || attLoading) {
     return (

@@ -149,7 +149,7 @@ export default function InboundProductivity({ period, metric, granularity = 'day
                   <tr
                     key={o}
                     className="border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => navigate('/inbound/brand', { state: { owner: o } })}
+                    onClick={() => navigate('/inbound/overview', { state: { owner: o } })}
                   >
                     <td className="py-2.5">
                       <div className="flex items-center gap-2">
